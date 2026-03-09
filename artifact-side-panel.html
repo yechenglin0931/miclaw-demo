@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440,initial-scale=1">
+<title>MiClaw · Artifact 侧边面板 + 圈选引用</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F7F7F7;--surface:#FFF;--surfaceHover:#EEF0F5;--surfaceMuted:#F2F3F7;
+  --surfaceInset:#E9EBF0;--text:#1A1D23;--textSec:#636878;--textTer:#A0A4B0;
+  --border:#DDE0E8;--borderLight:#E9EBF0;
+  --accent:#3482FF;--accentHover:#2B6FE0;--accentMuted:rgba(52,130,255,.1);--accentLight:#6BA3FF;
+  --shadow-card:0 1px 3px rgba(0,0,0,.06);--shadow-elevated:0 4px 12px rgba(0,0,0,.1);
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;
+  --mono:'SF Mono','Fira Code','Menlo',monospace;
+  --red:#EF4444;--green:#22C55E;--amber:#F59E0B;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text)}
+
+/* App shell */
+.app{display:flex;height:100vh}
+
+/* Sidebar */
+.sidebar{width:210px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:12px}
+.sd{height:28px;-webkit-app-region:drag}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:13px;color:var(--textSec);cursor:pointer;transition:.12s;margin-bottom:2px}
+.nav-item:hover{background:var(--surfaceHover)}
+.nav-item.active{background:var(--accentMuted);color:var(--accent);font-weight:600}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-sep{height:1px;background:var(--borderLight);margin:8px 0}
+.nav-label{font-size:10px;font-weight:700;color:var(--textTer);text-transform:uppercase;letter-spacing:.6px;padding:8px 10px 4px}
+.session-item{padding:7px 10px;border-radius:8px;font-size:12.5px;color:var(--text);cursor:pointer;transition:.12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.session-item:hover{background:var(--surfaceHover)}
+.session-item.active{background:var(--accentMuted);color:var(--accent);font-weight:600}
+
+/* Main area */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* Top bar */
+.top-bar{height:48px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--borderLight);background:var(--surface);gap:12px;flex-shrink:0}
+.top-bar .title{font-size:14px;font-weight:600;flex:1}
+.top-bar .badge{font-size:11px;color:var(--accent);background:var(--accentMuted);padding:2px 8px;border-radius:99px}
+.tb-btn{width:32px;height:32px;border-radius:8px;border:none;background:0 0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textSec);transition:.12s}
+.tb-btn:hover{background:var(--surfaceHover);color:var(--text)}
+
+/* Split layout */
+.split{flex:1;display:flex;overflow:hidden;position:relative}
+
+/* Chat column */
+.chat-col{flex:1;min-width:360px;display:flex;flex-direction:column;overflow:hidden}
+.chat-msgs{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+.chat-msgs::-webkit-scrollbar{width:5px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--borderLight);border-radius:3px}
+
+.msg{display:flex;gap:10px;max-width:100%}
+.msg.user{justify-content:flex-end}
+.msg .avatar{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;margin-top:2px}
+.msg .avatar.agent{background:linear-gradient(135deg,var(--accent),var(--accentLight))}
+.bubble{border-radius:16px;padding:12px 16px;font-size:13.5px;line-height:1.65;max-width:520px}
+.bubble.user{background:var(--accentMuted);color:var(--text);border-bottom-right-radius:4px}
+.bubble.agent{background:var(--surface);color:var(--text);border-bottom-left-radius:4px;box-shadow:var(--shadow-card)}
+
+.tool-card{background:var(--surfaceMuted);border:1px solid var(--borderLight);border-radius:12px;padding:10px 14px;margin-top:8px;font-size:12px}
+.tool-card .tool-head{display:flex;align-items:center;gap:6px;color:var(--textSec);margin-bottom:4px}
+.tool-card .tool-head svg{width:14px;height:14px}
+.tool-card .tool-name{font-weight:600;color:var(--text)}
+.tool-card .tool-file{color:var(--accent);font-family:var(--mono);font-size:11px}
+
+.artifact-link{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:var(--accentMuted);color:var(--accent);font-size:12.5px;font-weight:600;cursor:pointer;margin-top:8px;transition:.12s;border:1px solid transparent}
+.artifact-link:hover{border-color:var(--accent);background:rgba(52,130,255,.16)}
+.artifact-link svg{width:14px;height:14px}
+
+/* Resizer */
+.resizer{width:6px;cursor:col-resize;background:var(--borderLight);flex-shrink:0;position:relative;transition:background .15s;z-index:10}
+.resizer:hover,.resizer.active{background:var(--accent)}
+.resizer::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:32px;border-radius:1px;background:var(--textTer);opacity:.4}
+.resizer:hover::after{background:var(--accent);opacity:1}
+
+/* Panel column */
+.panel-col{width:50%;min-width:320px;display:flex;flex-direction:column;background:var(--surface);overflow:hidden}
+
+/* Panel tabs */
+.panel-tabs{display:flex;align-items:center;height:40px;border-bottom:1px solid var(--borderLight);padding:0 8px;gap:2px;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.panel-tabs::-webkit-scrollbar{display:none}
+.ptab{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-size:12px;color:var(--textSec);cursor:pointer;white-space:nowrap;transition:.12s;position:relative}
+.ptab:hover{background:var(--surfaceHover);color:var(--text)}
+.ptab.active{color:var(--accent);font-weight:600;background:var(--accentMuted)}
+.ptab svg{width:13px;height:13px;flex-shrink:0}
+.ptab .close{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;opacity:0;transition:.12s;margin-left:2px}
+.ptab:hover .close{opacity:.6}
+.ptab .close:hover{opacity:1;background:rgba(0,0,0,.08)}
+.ptab .ver{font-size:10px;color:var(--textTer);margin-left:2px}
+
+/* Panel toolbar */
+.panel-toolbar{display:flex;align-items:center;height:36px;border-bottom:1px solid var(--borderLight);padding:0 10px;gap:2px;flex-shrink:0}
+.pt-btn{height:26px;padding:0 8px;border-radius:6px;border:none;background:0 0;cursor:pointer;font-size:11px;color:var(--textSec);display:flex;align-items:center;gap:4px;transition:.12s}
+.pt-btn:hover{background:var(--surfaceHover);color:var(--text)}
+.pt-btn svg{width:13px;height:13px}
+.pt-btn.active{background:var(--accentMuted);color:var(--accent)}
+.pt-sep{width:1px;height:18px;background:var(--borderLight);margin:0 4px}
+.gen-indicator{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--accent);margin-left:auto}
+.gen-indicator .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.2s infinite}
+
+/* Panel content */
+.panel-content{flex:1;overflow:hidden;position:relative}
+.panel-content iframe{width:100%;height:100%;border:none}
+
+/* Selection overlay */
+.select-overlay{position:absolute;inset:0;cursor:crosshair;z-index:20;display:none}
+.select-overlay.active{display:block}
+.select-rect{position:absolute;border:2px dashed var(--accent);background:rgba(52,130,255,.08);border-radius:4px;pointer-events:none}
+.select-highlight{background:rgba(52,130,255,.2);border-radius:2px}
+
+/* Input area */
+.input-area{padding:12px 16px 16px;border-top:1px solid var(--borderLight);background:var(--surface)}
+.input-refs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.ref-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;background:var(--accentMuted);border:1px solid rgba(52,130,255,.2);font-size:11.5px;color:var(--accent);max-width:280px;cursor:default;animation:fadeIn .2s ease-out}
+.ref-tag .pin{font-size:12px;flex-shrink:0}
+.ref-tag .ref-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ref-tag .ref-thumb{width:32px;height:24px;border-radius:4px;background:var(--surfaceInset);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.ref-tag .ref-thumb img{width:100%;height:100%;object-fit:cover}
+.ref-tag .ref-remove{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--textSec);flex-shrink:0;transition:.12s}
+.ref-tag .ref-remove:hover{background:rgba(239,68,68,.1);color:var(--red)}
+
+.input-row{display:flex;gap:8px;align-items:flex-end}
+.input-actions{display:flex;gap:4px;flex-shrink:0}
+.input-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--borderLight);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textSec);transition:.15s}
+.input-btn:hover{border-color:var(--accent);color:var(--accent)}
+.input-btn.active{background:var(--accentMuted);border-color:var(--accent);color:var(--accent)}
+.input-btn svg{width:16px;height:16px}
+.input-btn .tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);padding:4px 10px;border-radius:6px;background:var(--text);color:#fff;font-size:11px;white-space:nowrap;pointer-events:none;opacity:0;transition:.15s}
+.input-btn:hover .tooltip{opacity:1}
+.input-field{flex:1;min-height:38px;max-height:120px;border-radius:12px;border:1px solid var(--borderLight);background:var(--surfaceMuted);padding:9px 14px;font-size:13.5px;color:var(--text);outline:none;resize:none;line-height:1.5;font-family:var(--font);transition:.2s}
+.input-field:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentMuted);background:var(--surface)}
+.input-field::placeholder{color:var(--textTer)}
+.send-btn{width:34px;height:34px;border-radius:8px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.12s}
+.send-btn:hover{background:var(--accentHover)}
+.send-btn svg{width:16px;height:16px;fill:#fff}
+
+/* Mode banner */
+.mode-banner{position:absolute;top:8px;left:50%;transform:translateX(-50%);padding:5px 14px;border-radius:99px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px;z-index:30;box-shadow:0 4px 12px rgba(52,130,255,.3);animation:fadeInDown .2s ease-out}
+.mode-banner svg{width:14px;height:14px}
+.mode-banner .esc{opacity:.7;font-weight:400;margin-left:4px}
+
+/* Tab switch control */
+.tab-switch{position:fixed;top:8px;right:16px;display:flex;gap:2px;background:var(--surface);border-radius:10px;padding:3px;box-shadow:var(--shadow-card);z-index:999;border:1px solid var(--borderLight)}
+.ts{padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;color:var(--textSec);transition:.12s;white-space:nowrap}
+.ts:hover{color:var(--text)}
+.ts.active{background:var(--accentMuted);color:var(--accent);font-weight:600}
+
+/* Scenes */
+.scene{display:none;width:100%;height:100%}
+.scene.active{display:flex}
+
+/* Embedded iframe preview content */
+.preview-mock{padding:32px;overflow-y:auto;height:100%}
+.preview-mock h1{font-size:22px;font-weight:700;margin-bottom:12px}
+.preview-mock p{font-size:14px;line-height:1.7;color:#444;margin-bottom:12px}
+.form-mock{max-width:380px;margin:0 auto;padding:32px}
+.form-mock .fm-logo{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.form-mock .fm-logo .dot{width:28px;height:28px;border-radius:8px;background:#EF4444;display:flex;align-items:center;justify-content:center}
+.form-mock .fm-logo .dot svg{width:16px;height:16px;fill:#fff}
+.form-mock .fm-logo span{font-size:13px;color:#666}
+.form-mock .fm-brand{font-size:11px;color:#999;margin-bottom:24px}
+.form-mock h2{font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:6px}
+.form-mock .fm-desc{font-size:13px;color:#666;margin-bottom:20px}
+.form-mock label{font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px}
+.form-mock .fm-input{width:100%;height:40px;border:1px solid #ddd;border-radius:8px;padding:0 12px;font-size:13px;margin-bottom:16px}
+.form-mock .fm-success{background:#ecfdf5;border:1px solid #86efac;border-radius:10px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
+.form-mock .fm-success .check{width:20px;height:20px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.form-mock .fm-success .check svg{width:12px;height:12px;fill:#fff}
+.form-mock .fm-success .fm-s-title{font-size:13px;font-weight:600;color:#166534}
+.form-mock .fm-success .fm-s-desc{font-size:12px;color:#15803d;margin-top:2px}
+.form-mock .fm-btn{width:100%;height:40px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:13px;color:#333;cursor:pointer;margin-bottom:12px}
+.form-mock .fm-link{font-size:12px;color:var(--accent);text-align:center;display:block}
+
+/* Selection demo visuals */
+.sel-text{background:rgba(52,130,255,.2);padding:1px 0;border-radius:2px}
+.sel-box{position:absolute;border:2px dashed var(--accent);background:rgba(52,130,255,.06);border-radius:6px}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeInDown{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<!-- Scene switcher -->
+<div class="tab-switch">
+  <div class="ts active" onclick="switchScene('s1',this)">场景 1：分屏预览</div>
+  <div class="ts" onclick="switchScene('s2',this)">场景 2：圈选文字</div>
+  <div class="ts" onclick="switchScene('s3',this)">场景 3：框选区域</div>
+</div>
+
+<!-- ========== SCENE 1: Split view with artifact ========== -->
+<div class="scene active" id="s1">
+<div class="app">
+  <div class="sidebar">
+    <div class="sd"></div>
+    <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 对话</div>
+    <div class="nav-sep"></div>
+    <div class="nav-label">今天</div>
+    <div class="session-item active">网站密码重置页设计</div>
+    <div class="session-item">帮我翻译日文论文</div>
+    <div class="session-item">销售数据分析报告</div>
+    <div class="nav-label">昨天</div>
+    <div class="session-item">Landing page 原型</div>
+    <div class="session-item">React 组件优化</div>
+  </div>
+
+  <div class="main-area">
+    <div class="top-bar">
+      <span class="title">网站密码重置页设计</span>
+      <span class="badge">● GPT-4o</span>
+    </div>
+
+    <div class="split">
+      <!-- Chat column -->
+      <div class="chat-col">
+        <div class="chat-msgs">
+          <div class="msg user"><div class="bubble user">帮我设计一个密码重置页面的前端效果，需要包含品牌 logo、邮箱输入、成功提示。整体简洁专业。</div></div>
+
+          <div class="msg">
+            <div class="avatar agent">M</div>
+            <div>
+              <div class="bubble agent">
+                好的，我来为你设计一个密码重置页面。我会包含以下要素：
+                <br><br>1. <strong>品牌区域</strong> — 全球搜索服务logo + 产品标识
+                <br>2. <strong>找回密码表单</strong> — 标题、描述、邮箱输入框
+                <br>3. <strong>成功提示</strong> — 绿色提示条显示发送成功
+                <br>4. <strong>底部操作</strong> — 重新发送 + 返回登录
+                <div class="tool-card">
+                  <div class="tool-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> <span class="tool-name">create_file</span></div>
+                  <div class="tool-file">reset-password.html</div>
+                </div>
+                <div class="artifact-link" onclick="document.querySelector('.panel-col').style.display='flex'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+                  点击预览：密码重置页面
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="msg user"><div class="bubble user">网站已创建完成！我看了一眼色彩方案挺好的，你可以帮我把成功提示的文字改小一号吗？</div></div>
+
+          <div class="msg">
+            <div class="avatar agent">M</div>
+            <div>
+              <div class="bubble agent">
+                已将成功提示区域的字体大小调小一号，同时优化了行高让文字更紧凑：
+                <div class="artifact-link">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+                  查看更新：密码重置页面 v2
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input area -->
+        <div class="input-area">
+          <div class="input-row">
+            <div class="input-actions">
+              <div class="input-btn" style="position:relative">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </div>
+              <div class="input-btn" style="position:relative" title="圈选引用">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg>
+              </div>
+            </div>
+            <textarea class="input-field" rows="1" placeholder="向 MiClaw 提问…"></textarea>
+            <button class="send-btn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resizer -->
+      <div class="resizer"></div>
+
+      <!-- Side panel -->
+      <div class="panel-col">
+        <div class="panel-tabs">
+          <div class="ptab active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            密码重置页面
+            <span class="ver">v2</span>
+            <span class="close">×</span>
+          </div>
+          <div class="ptab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            密码重置页面
+            <span class="ver">v1</span>
+            <span class="close">×</span>
+          </div>
+        </div>
+        <div class="panel-toolbar">
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 刷新</button>
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> 浏览器</button>
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 复制</button>
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载</button>
+          <div class="pt-sep"></div>
+          <button class="pt-btn" title="圈选引用"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg> 圈选</button>
+          <div class="pt-sep"></div>
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg> 全屏</button>
+        </div>
+        <div class="panel-content">
+          <!-- Mock preview of password reset page -->
+          <div class="preview-mock" style="background:#fff">
+            <div class="form-mock">
+              <div class="fm-logo">
+                <div class="dot"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+                <span>search api</span>
+              </div>
+              <div class="fm-brand">Authentication · Forgot password</div>
+              <h2>Forgot password</h2>
+              <div class="fm-desc">Enter your email address to reset your password.</div>
+              <label>Email *</label>
+              <input class="fm-input" type="text" value="gaochuqiang303@gmail.com" readonly>
+              <div class="fm-success">
+                <div class="check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <div>
+                  <div class="fm-s-title">Email sent</div>
+                  <div class="fm-s-desc">Email with instructions on how to reset your password has been sent to you.</div>
+                </div>
+              </div>
+              <button class="fm-btn">Resend reset</button>
+              <a class="fm-link" href="#">Back to login</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SCENE 2: Text selection mode ========== -->
+<div class="scene" id="s2">
+<div class="app">
+  <div class="sidebar">
+    <div class="sd"></div>
+    <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 对话</div>
+    <div class="nav-sep"></div>
+    <div class="nav-label">今天</div>
+    <div class="session-item active">网站密码重置页设计</div>
+    <div class="session-item">帮我翻译日文论文</div>
+  </div>
+  <div class="main-area">
+    <div class="top-bar">
+      <span class="title">网站密码重置页设计</span>
+      <span class="badge">● GPT-4o</span>
+    </div>
+    <div class="split">
+      <div class="chat-col">
+        <div class="chat-msgs">
+          <div class="msg user"><div class="bubble user">帮我设计一个密码重置页面</div></div>
+          <div class="msg">
+            <div class="avatar agent">M</div>
+            <div><div class="bubble agent">好的，页面已生成，包含品牌区域、表单和成功提示。
+              <div class="artifact-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg> 查看预览</div>
+            </div></div>
+          </div>
+        </div>
+
+        <!-- Input with text reference -->
+        <div class="input-area">
+          <div class="input-refs">
+            <div class="ref-tag">
+              <span class="pin">📌</span>
+              <span class="ref-text">"Email with instructions on how to reset your password has been sent to you."</span>
+              <span class="ref-remove">×</span>
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-actions">
+              <div class="input-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
+              <div class="input-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg></div>
+            </div>
+            <textarea class="input-field" rows="1" style="border-color:var(--accent);box-shadow:0 0 0 3px var(--accentMuted)">把这段提示文字改成中文</textarea>
+            <button class="send-btn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="resizer"></div>
+
+      <div class="panel-col">
+        <div class="panel-tabs">
+          <div class="ptab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg> 密码重置页面 <span class="ver">v2</span></div>
+        </div>
+        <div class="panel-toolbar">
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 刷新</button>
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 复制</button>
+          <div class="pt-sep"></div>
+          <button class="pt-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg> 圈选中</button>
+        </div>
+        <div class="panel-content" style="position:relative">
+          <!-- Crosshair mode banner -->
+          <div class="mode-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg>
+            圈选模式 — 选中文字或框选区域
+            <span class="esc">Esc 退出</span>
+          </div>
+          <div class="preview-mock" style="background:#fff;cursor:crosshair">
+            <div class="form-mock">
+              <div class="fm-logo"><div class="dot"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><span>search api</span></div>
+              <div class="fm-brand">Authentication · Forgot password</div>
+              <h2>Forgot password</h2>
+              <div class="fm-desc">Enter your email address to reset your password.</div>
+              <label>Email *</label>
+              <input class="fm-input" type="text" value="gaochuqiang303@gmail.com" readonly>
+              <div class="fm-success">
+                <div class="check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <div>
+                  <div class="fm-s-title">Email sent</div>
+                  <div class="fm-s-desc"><span class="sel-text">Email with instructions on how to reset your password has been sent to you.</span></div>
+                </div>
+              </div>
+              <button class="fm-btn">Resend reset</button>
+              <a class="fm-link" href="#">Back to login</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SCENE 3: Region selection mode ========== -->
+<div class="scene" id="s3">
+<div class="app">
+  <div class="sidebar">
+    <div class="sd"></div>
+    <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 对话</div>
+    <div class="nav-sep"></div>
+    <div class="nav-label">今天</div>
+    <div class="session-item active">网站密码重置页设计</div>
+    <div class="session-item">帮我翻译日文论文</div>
+  </div>
+  <div class="main-area">
+    <div class="top-bar">
+      <span class="title">网站密码重置页设计</span>
+      <span class="badge">● GPT-4o</span>
+    </div>
+    <div class="split">
+      <div class="chat-col">
+        <div class="chat-msgs">
+          <div class="msg user"><div class="bubble user">帮我设计一个密码重置页面</div></div>
+          <div class="msg">
+            <div class="avatar agent">M</div>
+            <div><div class="bubble agent">好的，页面已生成。
+              <div class="artifact-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg> 查看预览</div>
+            </div></div>
+          </div>
+        </div>
+
+        <!-- Input with region screenshot reference -->
+        <div class="input-area">
+          <div class="input-refs">
+            <div class="ref-tag">
+              <span class="pin">📌</span>
+              <span class="ref-thumb" style="width:40px;height:30px;background:linear-gradient(135deg,#ecfdf5,#bbf7d0);border:1px solid #86efac;border-radius:4px"></span>
+              <span class="ref-text">区域截图 · 成功提示区</span>
+              <span class="ref-remove">×</span>
+            </div>
+            <div class="ref-tag">
+              <span class="pin">📌</span>
+              <span class="ref-text">"Resend reset"</span>
+              <span class="ref-remove">×</span>
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-actions">
+              <div class="input-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
+              <div class="input-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg></div>
+            </div>
+            <textarea class="input-field" rows="1" style="border-color:var(--accent);box-shadow:0 0 0 3px var(--accentMuted)">把成功提示改成红色错误样式，按钮文字改为"重试"</textarea>
+            <button class="send-btn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="resizer"></div>
+
+      <div class="panel-col">
+        <div class="panel-tabs">
+          <div class="ptab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg> 密码重置页面 <span class="ver">v2</span></div>
+        </div>
+        <div class="panel-toolbar">
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 刷新</button>
+          <button class="pt-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 复制</button>
+          <div class="pt-sep"></div>
+          <button class="pt-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg> 圈选中</button>
+        </div>
+        <div class="panel-content" style="position:relative">
+          <div class="mode-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/></svg>
+            圈选模式 — 选中文字或框选区域
+            <span class="esc">Esc 退出</span>
+          </div>
+          <div class="preview-mock" style="background:#fff;cursor:crosshair;position:relative">
+            <div class="form-mock">
+              <div class="fm-logo"><div class="dot"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><span>search api</span></div>
+              <div class="fm-brand">Authentication · Forgot password</div>
+              <h2>Forgot password</h2>
+              <div class="fm-desc">Enter your email address to reset your password.</div>
+              <label>Email *</label>
+              <input class="fm-input" type="text" value="gaochuqiang303@gmail.com" readonly>
+              <div class="fm-success" style="position:relative">
+                <div class="check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <div>
+                  <div class="fm-s-title">Email sent</div>
+                  <div class="fm-s-desc">Email with instructions on how to reset your password has been sent to you.</div>
+                </div>
+                <!-- Selection box overlay -->
+                <div class="sel-box" style="inset:-4px;border-radius:14px"></div>
+              </div>
+              <button class="fm-btn"><span class="sel-text">Resend reset</span></button>
+              <a class="fm-link" href="#">Back to login</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function switchScene(id,el){
+  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ts').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
