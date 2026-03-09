@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440,initial-scale=1">
+<title>MiClaw · PC vs 手機端 UI 調整效果圖</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F0F1F5;--surface:#FFF;--text:#1A1D23;--textSec:#636878;
+  --border:#DDE0E8;--accent:#3482FF;--accentMuted:rgba(52,130,255,.1);
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text)}
+.shell{display:flex;height:100vh;flex-direction:column}
+
+/* Top bar */
+.top-bar{height:54px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.top-bar .logo{font-weight:700;font-size:14px;color:var(--accent);white-space:nowrap}
+.top-bar .sep{width:1px;height:24px;background:var(--border)}
+.top-bar .title{font-size:13px;color:var(--textSec)}
+
+/* Sidebar tabs */
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:240px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:12px 8px}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.nav-group{margin-bottom:16px}
+.nav-group-title{font-size:10px;font-weight:700;color:var(--textSec);text-transform:uppercase;letter-spacing:.8px;padding:8px 12px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:.12s;font-size:13px;color:var(--text);user-select:none}
+.nav-item:hover{background:rgba(0,0,0,.04)}
+.nav-item.active{background:var(--accentMuted);color:var(--accent);font-weight:600}
+.nav-item .num{width:22px;height:22px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--textSec);flex-shrink:0}
+.nav-item.active .num{background:var(--accent);color:#fff}
+
+/* Content area */
+.content{flex:1;position:relative;overflow:hidden}
+.content iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:none;background:#fff}
+.content iframe.active{display:block}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="top-bar">
+    <span class="logo">MiClaw</span>
+    <div class="sep"></div>
+    <span class="title">PC vs 手機端 UI 調整效果圖（10 個調整點）</span>
+  </div>
+  <div class="main">
+    <div class="sidebar">
+      <div class="nav-group">
+        <div class="nav-group-title">色彩與視覺</div>
+        <div class="nav-item active" onclick="show(0,this)">
+          <span class="num">01</span> 色彩系統對齊
+        </div>
+        <div class="nav-item" onclick="show(1,this)">
+          <span class="num">02</span> 用戶消息氣泡
+        </div>
+        <div class="nav-item" onclick="show(2,this)">
+          <span class="num">10</span> 字體與間距
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">輸入與交互</div>
+        <div class="nav-item" onclick="show(3,this)">
+          <span class="num">03</span> 輸入框樣式
+        </div>
+        <div class="nav-item" onclick="show(4,this)">
+          <span class="num">04</span> 工具調用卡片
+        </div>
+        <div class="nav-item" onclick="show(5,this)">
+          <span class="num">05</span> 權限對話框
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">頁面級</div>
+        <div class="nav-item" onclick="show(6,this)">
+          <span class="num">06</span> 歡迎頁
+        </div>
+        <div class="nav-item" onclick="show(7,this)">
+          <span class="num">07</span> 設置頁
+        </div>
+        <div class="nav-item" onclick="show(8,this)">
+          <span class="num">09</span> 完整聊天頁
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">動效</div>
+        <div class="nav-item" onclick="show(9,this)">
+          <span class="num">08</span> 動畫與過渡
+        </div>
+      </div>
+    </div>
+    <div class="content" id="content">
+      <iframe class="active" data-src="01-color-system.html"></iframe>
+      <iframe data-src="02-user-bubble.html"></iframe>
+      <iframe data-src="10-typography-spacing.html"></iframe>
+      <iframe data-src="03-input-field.html"></iframe>
+      <iframe data-src="04-tool-call-card.html"></iframe>
+      <iframe data-src="05-permission-dialog.html"></iframe>
+      <iframe data-src="06-welcome-page.html"></iframe>
+      <iframe data-src="07-settings-page.html"></iframe>
+      <iframe data-src="09-chat-page-full.html"></iframe>
+      <iframe data-src="08-animations.html"></iframe>
+    </div>
+  </div>
+</div>
+<script>
+const frames=document.querySelectorAll('#content iframe');
+frames[0].src=frames[0].dataset.src;
+
+function show(i,el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  frames.forEach(f=>f.classList.remove('active'));
+  frames[i].classList.add('active');
+  if(!frames[i].src)frames[i].src=frames[i].dataset.src;
+}
+</script>
+</body>
+</html>

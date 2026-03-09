@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>调整点 5：权限确认对话框</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; background: #F0F0F0; }
+.container { width: 1440px; margin: 0 auto; padding: 40px; }
+h1 { font-size: 28px; font-weight: 700; color: #1C1F28; margin-bottom: 8px; }
+.subtitle { font-size: 14px; color: #636878; margin-bottom: 40px; }
+.comparison { display: flex; gap: 40px; margin-bottom: 48px; }
+.panel-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+.panel-label.before { color: #0D9488; }
+.panel-label.after { color: #3482FF; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tag-mobile { background: rgba(52,130,255,0.1); color: #3482FF; }
+
+.mock-screen {
+  flex: 1;
+  background: #F7F7F7;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  overflow: hidden;
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mock-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Current PC dialog */
+.dialog-current {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 460px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.16);
+  overflow: hidden;
+  animation: scaleIn 0.2s ease-out;
+}
+@keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.dialog-accent-bar-teal { height: 4px; background: #0D9488; }
+.dialog-accent-bar-blue { height: 4px; background: #3482FF; }
+
+.dialog-header-current {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 16px 20px 12px;
+}
+.dialog-icon-teal {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(13,148,136,0.10);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.dialog-icon-blue {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(52,130,255,0.10);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.dialog-title { font-size: 15px; font-weight: 600; color: #1C1F28; }
+.dialog-desc { font-size: 12px; color: #636878; margin-top: 2px; }
+.dialog-close {
+  width: 28px; height: 28px; border-radius: 8px; border: none;
+  background: transparent; cursor: pointer; font-size: 16px; color: #636878;
+  display: flex; align-items: center; justify-content: center;
+}
+.dialog-close:hover { background: #F2F3F7; }
+
+.dialog-divider { height: 1px; background: #E9EBF0; margin: 0 20px; }
+
+.dialog-content { padding: 16px 20px; }
+
+/* Technical display - current */
+.tech-label { font-size: 10px; color: #636878; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px; }
+.tech-box {
+  background: #F6F7FA; border-radius: 8px; padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.tech-code { font-size: 12px; font-family: 'SF Mono', monospace; color: #1C1F28; }
+.tech-json {
+  font-size: 11px; font-family: 'SF Mono', monospace; color: #1C1F28;
+  white-space: pre-wrap; word-break: break-all; max-height: 100px; overflow-y: auto;
+}
+
+/* Human-friendly display - proposed */
+.action-card {
+  background: rgba(52,130,255,0.04);
+  border: 1px solid rgba(52,130,255,0.12);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.action-label { font-size: 11px; color: #3482FF; font-weight: 600; margin-bottom: 6px; }
+.action-text { font-size: 14px; color: #1C1F28; line-height: 1.5; font-weight: 500; }
+.action-detail { font-size: 12px; color: #636878; margin-top: 4px; line-height: 1.5; }
+
+.detail-toggle {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: rgba(0,0,0,0.4); cursor: pointer;
+  padding: 4px 0;
+  margin-top: 4px;
+}
+.detail-toggle:hover { color: #3482FF; }
+
+/* Warning */
+.warning-box {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 12px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.warning-text { font-size: 12px; color: #991B1B; line-height: 1.5; }
+
+/* Footer */
+.dialog-footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid #E9EBF0;
+}
+.btn-deny {
+  padding: 8px 16px; border-radius: 8px; border: none;
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+}
+.btn-deny-current { color: #636878; background: transparent; }
+.btn-deny-current:hover { background: #F2F3F7; }
+.btn-deny-new { color: #636878; background: transparent; }
+.btn-deny-new:hover { background: rgba(0,0,0,0.05); }
+
+.btn-approve {
+  padding: 8px 20px; border-radius: 8px; border: none;
+  font-size: 13px; font-weight: 500; color: #FFF; cursor: pointer; transition: all 0.15s;
+}
+.btn-approve-teal { background: #0D9488; }
+.btn-approve-teal:hover { background: #0F766E; }
+.btn-approve-blue { background: #3482FF; }
+.btn-approve-blue:hover { background: #2B6FE0; }
+
+.note { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 0 12px 12px 0; margin-top: 32px; }
+.note-title { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px; }
+.note-text { font-size: 13px; color: #78350F; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>调整点 5：权限确认对话框</h1>
+  <p class="subtitle">将技术化的工具名+JSON 展示改为面向用户的操作描述，降低认知门槛，与手机端 Consent 模式对齐</p>
+
+  <div class="comparison">
+    <!-- BEFORE -->
+    <div style="flex:1">
+      <div class="panel-label before">当前 PC 端 — 技术展示</div>
+      <div class="mock-screen">
+        <div class="mock-overlay">
+          <div class="dialog-current">
+            <div class="dialog-accent-bar-teal"></div>
+            <div class="dialog-header-current">
+              <div class="dialog-icon-teal">⚠️</div>
+              <div style="flex:1">
+                <div class="dialog-title">需要权限确认</div>
+                <div class="dialog-desc">Agent 请求执行以下操作</div>
+              </div>
+              <button class="dialog-close">✕</button>
+            </div>
+            <div class="dialog-divider"></div>
+            <div class="dialog-content">
+              <div class="tech-label">工具名称</div>
+              <div class="tech-box">
+                <div class="tech-code">Bash</div>
+              </div>
+              <div class="tech-label">工具输入</div>
+              <div class="tech-box">
+                <div class="tech-json">{
+  "command": "rm -rf node_modules && npm install",
+  "working_directory": "/Users/me/project"
+}</div>
+              </div>
+              <div class="warning-box">
+                <span style="font-size:16px">⚠️</span>
+                <div class="warning-text">此操作包含潜在危险命令（rm -rf），请仔细确认</div>
+              </div>
+            </div>
+            <div class="dialog-footer">
+              <button class="btn-deny btn-deny-current">拒绝</button>
+              <button class="btn-approve btn-approve-teal">允许</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div style="flex:1">
+      <div class="panel-label after">调整后 PC 端 — 用户友好 <span class="tag tag-mobile">对齐手机端</span></div>
+      <div class="mock-screen">
+        <div class="mock-overlay">
+          <div class="dialog-current">
+            <div class="dialog-accent-bar-blue"></div>
+            <div class="dialog-header-current">
+              <div class="dialog-icon-blue">🛡️</div>
+              <div style="flex:1">
+                <div class="dialog-title">操作确认</div>
+                <div class="dialog-desc">MiClaw 需要你的许可来执行以下操作</div>
+              </div>
+              <button class="dialog-close">✕</button>
+            </div>
+            <div class="dialog-divider"></div>
+            <div class="dialog-content">
+              <div class="action-card">
+                <div class="action-label">执行终端命令</div>
+                <div class="action-text">重新安装项目依赖</div>
+                <div class="action-detail">将删除 node_modules 并重新运行 npm install<br>工作目录：/Users/me/project</div>
+              </div>
+
+              <div class="warning-box">
+                <span style="font-size:16px">⚠️</span>
+                <div class="warning-text">此操作将删除并重建 node_modules 目录，可能需要几分钟完成</div>
+              </div>
+
+              <div class="detail-toggle">
+                ▸ 查看技术详情
+              </div>
+            </div>
+            <div class="dialog-footer">
+              <button class="btn-deny btn-deny-new">拒绝</button>
+              <button class="btn-approve btn-approve-blue">允许执行</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison table -->
+  <div style="background:#FFF;border-radius:16px;padding:24px 32px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:32px">
+    <div style="font-size:16px;font-weight:600;color:#1C1F28;margin-bottom:16px">关键差异对比</div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr>
+          <th style="text-align:left;font-size:12px;color:#636878;padding:8px 12px;border-bottom:2px solid #E9EBF0">方面</th>
+          <th style="text-align:left;font-size:12px;color:#636878;padding:8px 12px;border-bottom:2px solid #E9EBF0">手机端</th>
+          <th style="text-align:left;font-size:12px;color:#636878;padding:8px 12px;border-bottom:2px solid #E9EBF0">当前 PC</th>
+          <th style="text-align:left;font-size:12px;color:#636878;padding:8px 12px;border-bottom:2px solid #E9EBF0">调整后 PC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">标题</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">通用 AlertDialog</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">"需要权限确认"</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">"操作确认"</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">内容展示</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">action + details 文本</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">工具名 + JSON 参数</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">操作描述 + 可折叠技术详情</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">危险提醒</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">无特殊处理</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">红色警告框</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">红色警告框 + 影响说明</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">按钮文案</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">允许 / 拒绝</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">允许 / 拒绝</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #F0F0F0;font-size:13px">允许执行 / 拒绝</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;font-size:13px">强调色</td>
+          <td style="padding:10px 12px;font-size:13px">#3482FF</td>
+          <td style="padding:10px 12px;font-size:13px">#0D9488</td>
+          <td style="padding:10px 12px;font-size:13px">#3482FF ✓</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <div class="note-title">实施说明</div>
+    <div class="note-text">
+      1. 在 <code>AgentPermissionModal.tsx</code> 中，为常见工具类型（Bash、Read、Write、Glob 等）维护一个映射表，将工具名翻译为用户可理解的操作描述<br>
+      2. 将 JSON 参数解析为自然语言描述（如 Bash command → "执行终端命令: xxx"）<br>
+      3. 原始 JSON 参数保留在"查看技术详情"折叠区中<br>
+      4. 强调色从 teal 改为 blue，与整体色彩系统对齐<br>
+      5. 按钮文案更具体："允许执行" 而非通用的 "允许"
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>调整点 3：输入区域交互模式</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; background: #F0F0F0; }
+.container { width: 1440px; margin: 0 auto; padding: 40px; }
+h1 { font-size: 28px; font-weight: 700; color: #1C1F28; margin-bottom: 8px; }
+.subtitle { font-size: 14px; color: #636878; margin-bottom: 40px; }
+
+.comparison { display: flex; gap: 40px; margin-bottom: 48px; }
+.panel { flex: 1; background: #FFF; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.panel-header { padding: 20px 24px 16px; }
+.panel-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.panel-label.before { color: #0D9488; }
+.panel-label.after { color: #3482FF; }
+
+/* Current PC input (always expanded) */
+.input-current {
+  background: #F7F7F7;
+  padding: 16px 24px 24px;
+}
+.input-box-current {
+  background: #FFFFFF;
+  border: 1px solid #DDE0E8;
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+}
+.input-textarea-current {
+  width: 100%;
+  border: none;
+  outline: none;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 48px;
+  resize: none;
+  font-family: inherit;
+  color: #1C1F28;
+  background: transparent;
+}
+.input-toolbar-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-top: 1px solid #E9EBF0;
+}
+.tool-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: #636878; font-size: 16px;
+}
+.tool-btn:hover { background: #F2F3F7; }
+.send-btn-teal {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: #0D9488; color: #FFF; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+/* Proposed: Collapsed state */
+.input-collapsed {
+  background: #F7F7F7;
+  padding: 16px 24px 24px;
+}
+.input-collapsed-bar {
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 20px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: text;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  transition: all 0.15s ease;
+}
+.input-collapsed-bar:hover {
+  border-color: rgba(52,130,255,0.3);
+  box-shadow: 0 4px 16px rgba(52,130,255,0.08);
+}
+.collapsed-placeholder {
+  flex: 1;
+  font-size: 14px;
+  color: rgba(0,0,0,0.4);
+}
+.icon-btn {
+  width: 32px; height: 32px; border-radius: 50%; border: none;
+  background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: rgba(0,0,0,0.5); font-size: 18px; transition: all 0.15s;
+}
+.icon-btn:hover { background: rgba(0,0,0,0.05); }
+.icon-btn-blue { color: #3482FF; }
+
+/* Proposed: Expanded state */
+.input-expanded-bar {
+  background: #FFFFFF;
+  border: 1px solid rgba(52,130,255,0.2);
+  border-radius: 20px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(52,130,255,0.08);
+  transition: all 0.15s ease;
+}
+.input-textarea-new {
+  width: 100%;
+  border: none;
+  outline: none;
+  padding: 14px 16px 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 24px;
+  max-height: 160px;
+  resize: none;
+  font-family: inherit;
+  color: #1C1F28;
+  background: transparent;
+}
+.input-toolbar-new {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px 10px;
+}
+.send-btn-blue {
+  width: 32px; height: 32px; border-radius: 50%; border: none;
+  background: #3482FF; color: #FFF; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: all 0.15s;
+}
+.send-btn-blue:hover { background: #2B6FE0; }
+.send-btn-disabled {
+  width: 32px; height: 32px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.3); cursor: default;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+
+.state-label {
+  text-align: center; font-size: 12px; font-weight: 600; padding: 8px;
+  border-radius: 8px; margin-bottom: 12px;
+}
+.state-label-1 { color: #3482FF; background: rgba(52,130,255,0.08); }
+.state-label-2 { color: #10A37F; background: rgba(16,163,127,0.08); }
+
+.flow-arrow {
+  text-align: center; font-size: 24px; color: #636878; padding: 8px 0;
+}
+
+.note { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 0 12px 12px 0; margin-top: 32px; }
+.note-title { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px; }
+.note-text { font-size: 13px; color: #78350F; line-height: 1.6; }
+
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tag-mobile { background: rgba(52,130,255,0.1); color: #3482FF; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>调整点 3：输入区域交互模式</h1>
+  <p class="subtitle">借鉴手机端三态输入设计，为 PC 端引入折叠/展开态切换，提升空间利用率和交互层次感</p>
+
+  <div class="comparison">
+    <!-- BEFORE: Current PC -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-label before">当前 PC 端 — 始终展开</div>
+      </div>
+      <div class="input-current">
+        <div class="input-box-current">
+          <textarea class="input-textarea-current" placeholder="描述你想要完成的任务..." rows="2"></textarea>
+          <div class="input-toolbar-current">
+            <div style="display:flex;gap:4px">
+              <button class="tool-btn" title="附件">📎</button>
+              <button class="tool-btn" title="文件夹">📁</button>
+              <button class="tool-btn" title="技能">🧩</button>
+              <button class="tool-btn" title="模型">🤖</button>
+            </div>
+            <button class="send-btn-teal">↑</button>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:16px;padding:12px;background:rgba(13,148,136,0.05);border-radius:12px">
+          <div style="font-size:12px;color:#636878">输入框始终占据固定高度，无交互状态变化</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER: Proposed -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-label after">调整后 PC 端 — 折叠/展开双态 <span class="tag tag-mobile">对齐手机端</span></div>
+      </div>
+      <div class="input-collapsed">
+        <!-- State 1: Collapsed -->
+        <div class="state-label state-label-1">状态 1：折叠态（默认）</div>
+        <div class="input-collapsed-bar">
+          <button class="icon-btn" title="语音">🎤</button>
+          <span class="collapsed-placeholder">发送消息或输入 / 使用命令...</span>
+          <button class="icon-btn" title="附件">⊕</button>
+        </div>
+
+        <div class="flow-arrow">↓ 点击展开</div>
+
+        <!-- State 2: Expanded -->
+        <div class="state-label state-label-2">状态 2：展开态（输入中）</div>
+        <div class="input-expanded-bar">
+          <textarea class="input-textarea-new" rows="2">帮我分析这段代码的性能问题</textarea>
+          <div class="input-toolbar-new">
+            <div style="display:flex;gap:4px;align-items:center">
+              <button class="icon-btn" title="语音">🎤</button>
+              <button class="icon-btn" title="附件">📎</button>
+              <button class="icon-btn" title="技能">🧩</button>
+              <button class="icon-btn" title="文件夹">📁</button>
+              <button class="icon-btn" title="模型">🤖</button>
+            </div>
+            <button class="send-btn-blue">↑</button>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin-top:16px;padding:12px;background:rgba(52,130,255,0.05);border-radius:12px">
+          <div style="font-size:12px;color:#636878">
+            折叠态释放屏幕空间 · 展开态聚焦输入体验<br>
+            点击外部或发送后自动折叠 · 动画过渡 120ms
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile reference -->
+  <div style="background:#FFF;border-radius:16px;padding:24px 32px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:32px">
+    <div style="font-size:16px;font-weight:600;color:#1C1F28;margin-bottom:16px">手机端参考：三态输入框</div>
+    <div style="display:flex;gap:24px">
+      <div style="flex:1;text-align:center">
+        <div style="font-size:12px;font-weight:600;color:#3482FF;margin-bottom:8px">折叠文字态</div>
+        <div style="background:#F7F7F7;border-radius:20px;padding:12px 16px;display:flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,0.06)">
+          <span style="font-size:18px">🎤</span>
+          <span style="flex:1;color:rgba(0,0,0,0.4);font-size:13px">发消息或长按住说话</span>
+          <span style="font-size:18px">⊕</span>
+        </div>
+        <div style="font-size:11px;color:#636878;margin-top:6px">短按展开 · 长按录音</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:12px;font-weight:600;color:#3482FF;margin-bottom:8px">折叠语音态</div>
+        <div style="background:#F7F7F7;border-radius:20px;padding:12px 16px;display:flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,0.06)">
+          <span style="font-size:18px">⌨️</span>
+          <span style="flex:1;color:rgba(0,0,0,0.6);font-size:13px;font-weight:500">按住说话</span>
+          <span style="font-size:18px">⊕</span>
+        </div>
+        <div style="font-size:11px;color:#636878;margin-top:6px">长按中间录音</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:12px;font-weight:600;color:#3482FF;margin-bottom:8px">展开态</div>
+        <div style="background:#FFF;border-radius:20px;padding:12px 16px;border:1px solid rgba(52,130,255,0.2);box-shadow:0 4px 12px rgba(0,0,0,0.04)">
+          <div style="font-size:13px;color:#1C1F28;text-align:left;margin-bottom:8px">分析代码性能...</div>
+          <div style="display:flex;gap:4px;align-items:center;justify-content:space-between">
+            <div style="display:flex;gap:6px"><span style="font-size:14px">🎤</span><span style="font-size:14px">⊕</span></div>
+            <div style="width:24px;height:24px;border-radius:50%;background:#3482FF;color:#FFF;display:flex;align-items:center;justify-content:center;font-size:10px">↑</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#636878;margin-top:6px">多行输入 · 可发送/停止</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-title">PC 端适配说明</div>
+    <div class="note-text">
+      PC 端简化为双态（折叠/展开），省略语音折叠态（桌面端语音输入频率低）：<br>
+      • <b>折叠态</b>：单行高度，placeholder 居中，左侧可选麦克风按钮，右侧附件按钮<br>
+      • <b>展开态</b>：点击折叠栏后展开，多行文本区 + 工具栏（附件、技能、文件夹、模型选择、发送）<br>
+      • <b>自动折叠</b>：发送消息后 / 点击输入区外部 / 按 Esc<br>
+      • <b>动画</b>：AnimatedContent SizeTransform 120ms，对齐手机端 tween(120) 参数<br>
+      • <b>保留差异</b>：PC 端独有的文件夹选择器、模型选择器在展开态工具栏显示
+    </div>
+  </div>
+</div>
+</body>
+</html>

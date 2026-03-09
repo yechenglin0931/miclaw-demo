@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>调整点 1：色彩系统对齐</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; background: #F0F0F0; }
+.container { width: 1440px; margin: 0 auto; padding: 40px; }
+h1 { font-size: 28px; font-weight: 700; color: #1C1F28; margin-bottom: 8px; }
+.subtitle { font-size: 14px; color: #636878; margin-bottom: 40px; }
+.comparison { display: flex; gap: 40px; margin-bottom: 48px; }
+.panel { flex: 1; background: #FFF; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.panel-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid; }
+.panel-title.before { color: #0D9488; border-color: #0D9488; }
+.panel-title.after { color: #3482FF; border-color: #3482FF; }
+.color-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #F0F0F0; }
+.color-swatch { width: 48px; height: 48px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); flex-shrink: 0; }
+.color-info { flex: 1; }
+.color-name { font-size: 14px; font-weight: 600; color: #1C1F28; }
+.color-hex { font-size: 12px; color: #636878; font-family: 'SF Mono', monospace; margin-top: 2px; }
+.color-usage { font-size: 11px; color: #8E8EA0; margin-top: 2px; }
+.arrow { font-size: 20px; color: #636878; display: flex; align-items: center; }
+.section-label { font-size: 16px; font-weight: 600; color: #1C1F28; margin-bottom: 16px; margin-top: 8px; }
+
+.demo-area { background: #FFF; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 40px; }
+.demo-title { font-size: 16px; font-weight: 600; color: #1C1F28; margin-bottom: 24px; }
+
+.btn-before { background: #0D9488; color: #FFF; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.btn-after { background: #3482FF; color: #FFF; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.btn-row { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+.label { font-size: 12px; color: #636878; width: 80px; }
+
+.bubble-before { background: #FFFFFF; border-radius: 16px; padding: 12px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: inline-block; max-width: 320px; font-size: 14px; color: #1C1F28; }
+.bubble-after { background: rgba(52,130,255,0.10); border-radius: 16px; padding: 12px 16px; display: inline-block; max-width: 320px; font-size: 14px; color: #1C1F28; }
+
+.accent-bar-before { height: 4px; width: 100%; background: #0D9488; border-radius: 2px; }
+.accent-bar-after { height: 4px; width: 100%; background: #3482FF; border-radius: 2px; }
+
+.badge-before { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; background: rgba(13,148,136,0.10); color: #0D9488; font-size: 12px; font-weight: 500; }
+.badge-after { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; background: rgba(52,130,255,0.10); color: #3482FF; font-size: 12px; font-weight: 500; }
+
+.link-before { color: #0D9488; text-decoration: none; font-size: 14px; }
+.link-after { color: #3482FF; text-decoration: none; font-size: 14px; }
+
+.focus-ring-before { border: 2px solid #0D9488; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; width: 240px; }
+.focus-ring-after { border: 2px solid #3482FF; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; width: 240px; }
+
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px; }
+.tag-mobile { background: rgba(52,130,255,0.1); color: #3482FF; }
+.tag-pc-old { background: rgba(13,148,136,0.1); color: #0D9488; }
+
+.note { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 0 12px 12px 0; margin-top: 32px; }
+.note-title { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px; }
+.note-text { font-size: 13px; color: #78350F; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>调整点 1：色彩系统对齐</h1>
+  <p class="subtitle">将 PC 端主色从 Teal (#0D9488) 统一为手机端的 Blue (#3482FF)，实现品牌家族化一致性</p>
+
+  <!-- Color Palette Comparison -->
+  <div class="comparison">
+    <div class="panel">
+      <div class="panel-title before">当前 PC 端 (Teal)</div>
+      <div class="section-label">主色调</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #0D9488;"></div>
+        <div class="color-info">
+          <div class="color-name">Primary</div>
+          <div class="color-hex">#0D9488</div>
+          <div class="color-usage">按钮、链接、强调色</div>
+        </div>
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #0F766E;"></div>
+        <div class="color-info">
+          <div class="color-name">Primary Hover</div>
+          <div class="color-hex">#0F766E</div>
+          <div class="color-usage">悬停状态</div>
+        </div>
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: rgba(13,148,136,0.10);"></div>
+        <div class="color-info">
+          <div class="color-name">Accent Muted</div>
+          <div class="color-hex">rgba(13,148,136,0.10)</div>
+          <div class="color-usage">徽标背景、浅色区域</div>
+        </div>
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #2DD4BF;"></div>
+        <div class="color-info">
+          <div class="color-name">Accent Light</div>
+          <div class="color-hex">#2DD4BF</div>
+          <div class="color-usage">暗色模式链接</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:24px">用户消息气泡</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"></div>
+        <div class="color-info">
+          <div class="color-name">User Bubble (Light)</div>
+          <div class="color-hex">#FFFFFF + shadow</div>
+          <div class="color-usage">纯白 + 投影，无品牌色</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:24px">页面背景</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #F6F7FA;"></div>
+        <div class="color-info">
+          <div class="color-name">Background</div>
+          <div class="color-hex">#F6F7FA</div>
+          <div class="color-usage">冷灰调，偏蓝</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">→</div>
+
+    <div class="panel">
+      <div class="panel-title after">调整后 PC 端 (Blue) <span class="tag tag-mobile">对齐手机端</span></div>
+      <div class="section-label">主色调</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #3482FF;"></div>
+        <div class="color-info">
+          <div class="color-name">Primary</div>
+          <div class="color-hex">#3482FF</div>
+          <div class="color-usage">按钮、链接、强调色</div>
+        </div>
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #2B6FE0;"></div>
+        <div class="color-info">
+          <div class="color-name">Primary Hover</div>
+          <div class="color-hex">#2B6FE0</div>
+          <div class="color-usage">悬停状态</div>
+        </div>
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: rgba(52,130,255,0.10);"></div>
+        <div class="color-info">
+          <div class="color-name">Accent Muted</div>
+          <div class="color-hex">rgba(52,130,255,0.10)</div>
+          <div class="color-usage">徽标背景、浅色区域</div>
+        </div>
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #4788FF;"></div>
+        <div class="color-info">
+          <div class="color-name">Accent Light (Dark Mode)</div>
+          <div class="color-hex">#4788FF</div>
+          <div class="color-usage">暗色模式链接与主色</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:24px">用户消息气泡</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: rgba(52,130,255,0.10);"></div>
+        <div class="color-info">
+          <div class="color-name">User Bubble (Light)</div>
+          <div class="color-hex">rgba(52,130,255,0.10)</div>
+          <div class="color-usage">品牌蓝色淡底，与手机一致</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:24px">页面背景</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background: #F7F7F7;"></div>
+        <div class="color-info">
+          <div class="color-name">Background</div>
+          <div class="color-hex">#F7F7F7</div>
+          <div class="color-usage">中性暖灰，与手机端一致</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component Demo -->
+  <div class="demo-area">
+    <div class="demo-title">组件效果对比</div>
+    
+    <div class="btn-row">
+      <span class="label">主按钮</span>
+      <button class="btn-before">当前：Teal</button>
+      <span style="color:#636878">→</span>
+      <button class="btn-after">调整后：Blue</button>
+    </div>
+
+    <div class="btn-row">
+      <span class="label">用户气泡</span>
+      <div class="bubble-before">你好，帮我分析一下这段代码</div>
+      <span style="color:#636878">→</span>
+      <div class="bubble-after">你好，帮我分析一下这段代码</div>
+    </div>
+
+    <div class="btn-row">
+      <span class="label">强调色条</span>
+      <div style="width:200px"><div class="accent-bar-before"></div></div>
+      <span style="color:#636878">→</span>
+      <div style="width:200px"><div class="accent-bar-after"></div></div>
+    </div>
+
+    <div class="btn-row">
+      <span class="label">徽标</span>
+      <span class="badge-before">● 技能已启用</span>
+      <span style="color:#636878">→</span>
+      <span class="badge-after">● 技能已启用</span>
+    </div>
+
+    <div class="btn-row">
+      <span class="label">链接</span>
+      <a href="#" class="link-before">查看详情 →</a>
+      <span style="color:#636878">→</span>
+      <a href="#" class="link-after">查看详情 →</a>
+    </div>
+
+    <div class="btn-row">
+      <span class="label">焦点环</span>
+      <input class="focus-ring-before" value="输入框聚焦态" readonly>
+      <span style="color:#636878">→</span>
+      <input class="focus-ring-after" value="输入框聚焦态" readonly>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-title">实施说明</div>
+    <div class="note-text">
+      需要修改的文件：<br>
+      1. <code>tailwind.config.js</code> — 将 accent (#0D9488) 替换为 #3482FF，hover 替换为 #2B6FE0<br>
+      2. <code>src/renderer/index.css</code> — 更新 blockquote 边框色、链接色、streaming-bar 颜色<br>
+      3. 所有组件中 <code>bg-miclaw-accent</code>、<code>text-miclaw-accent</code> 引用将自动跟随 Tailwind 配置变化<br>
+      4. 用户消息气泡从 <code>bg-miclaw-surface</code> 改为 <code>bg-[rgba(52,130,255,0.10)]</code>，移除 shadow-subtle
+    </div>
+  </div>
+</div>
+</body>
+</html>

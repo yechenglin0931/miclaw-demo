@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>调整点 6：首页 / 欢迎页</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; background: #F0F0F0; }
+.container { width: 1440px; margin: 0 auto; padding: 40px; }
+h1 { font-size: 28px; font-weight: 700; color: #1C1F28; margin-bottom: 8px; }
+.subtitle { font-size: 14px; color: #636878; margin-bottom: 40px; }
+.comparison { display: flex; gap: 32px; margin-bottom: 48px; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tag-mobile { background: rgba(52,130,255,0.1); color: #3482FF; }
+
+/* Full page mock */
+.page-mock {
+  flex: 1;
+  background: #FFF;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.page-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 16px 20px 12px; }
+.page-label.before { color: #0D9488; }
+.page-label.after { color: #3482FF; }
+
+/* Current PC Welcome */
+.welcome-current {
+  background: #F6F7FA;
+  padding: 48px 40px;
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 480px;
+}
+.logo-current { width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #0D9488, #2DD4BF); margin-bottom: 20px; display: flex; align-items: center; justify-content: center; }
+.logo-current span { font-size: 28px; }
+.welcome-title-current { font-size: 28px; font-weight: 700; color: #1C1F28; margin-bottom: 8px; }
+.welcome-desc-current { font-size: 14px; color: #636878; max-width: 360px; text-align: center; margin-bottom: 32px; }
+
+.input-current-box {
+  width: 100%; max-width: 560px;
+  background: #FFF; border: 1px solid #DDE0E8; border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 0 20px rgba(13,148,136,0.18);
+  margin-bottom: 32px;
+  display: flex; align-items: center; gap: 8px;
+}
+.input-placeholder { color: #8E8EA0; font-size: 14px; flex: 1; }
+.send-circle-teal { width: 32px; height: 32px; border-radius: 8px; background: #0D9488; color: #FFF; border: none; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+/* Current quick actions */
+.qa-row-current { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 560px; }
+.qa-chip-current {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 12px;
+  background: #FFF; border: 1px solid #DDE0E8;
+  font-size: 13px; color: #1C1F28; cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.qa-chip-current:hover { border-color: #0D9488; background: rgba(13,148,136,0.04); }
+.qa-icon-current { font-size: 18px; }
+
+/* New Welcome */
+.welcome-new {
+  background: #F7F7F7;
+  padding: 48px 40px;
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 480px;
+}
+
+/* Gradient header (like mobile settings header) */
+.gradient-header {
+  width: 100%; max-width: 600px;
+  background: linear-gradient(135deg, #F2EDFC, #F6F5F7 30%, #F7FBFC 70%, #DCF0FA);
+  border-radius: 20px;
+  padding: 36px 32px;
+  display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 28px;
+}
+
+.logo-new {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: linear-gradient(135deg, #3482FF, #6BA3FF);
+  margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-new span { font-size: 24px; }
+.welcome-title-new { font-size: 24px; font-weight: 700; color: #000; margin-bottom: 6px; }
+.welcome-desc-new { font-size: 13px; color: rgba(0,0,0,0.5); max-width: 320px; text-align: center; }
+
+/* New input (collapsed style) */
+.input-new-box {
+  width: 100%; max-width: 560px;
+  background: #FFF; border: 1px solid rgba(0,0,0,0.06); border-radius: 20px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 16px rgba(52,130,255,0.08);
+  margin-bottom: 28px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: text;
+  transition: all 0.15s;
+}
+.input-new-box:hover {
+  border-color: rgba(52,130,255,0.3);
+  box-shadow: 0 4px 20px rgba(52,130,255,0.12);
+}
+.icon-btn-sm { font-size: 18px; color: rgba(0,0,0,0.4); cursor: pointer; }
+
+/* New quick action chips (mobile-style) */
+.qa-row-new { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 600px; }
+.qa-chip-new {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 18px; border-radius: 20px;
+  background: #FFF;
+  font-size: 14px; font-weight: 500; color: #1C1F28;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  box-shadow: none;
+}
+.qa-chip-new:hover { background: rgba(52,130,255,0.06); }
+.qa-chip-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.note { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 0 12px 12px 0; margin-top: 32px; }
+.note-title { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px; }
+.note-text { font-size: 13px; color: #78350F; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>调整点 6：首页 / 欢迎页</h1>
+  <p class="subtitle">引入手机端渐变头图和 QuickActionChip 样式，增强品牌识别度和首屏体验</p>
+
+  <div class="comparison">
+    <!-- BEFORE -->
+    <div class="page-mock">
+      <div class="page-label before">当前 PC 端</div>
+      <div class="welcome-current">
+        <div class="logo-current"><span>🦞</span></div>
+        <div class="welcome-title-current">嗨，有什么可以帮你？</div>
+        <div class="welcome-desc-current">我是你的 AI 助手，可以帮你完成各种任务</div>
+        <div class="input-current-box">
+          <span class="input-placeholder">描述你想要完成的任务...</span>
+          <button class="send-circle-teal">↑</button>
+        </div>
+        <div class="qa-row-current">
+          <div class="qa-chip-current"><span class="qa-icon-current">📊</span> 数据分析</div>
+          <div class="qa-chip-current"><span class="qa-icon-current">📝</span> 生成PPT</div>
+          <div class="qa-chip-current"><span class="qa-icon-current">🎓</span> 教育辅导</div>
+          <div class="qa-chip-current"><span class="qa-icon-current">🌐</span> 生成网页</div>
+          <div class="qa-chip-current"><span class="qa-icon-current">✏️</span> 写作助手</div>
+          <div class="qa-chip-current"><span class="qa-icon-current">🔍</span> 网页搜索</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div class="page-mock">
+      <div class="page-label after">调整后 PC 端 <span class="tag tag-mobile">对齐手机端</span></div>
+      <div class="welcome-new">
+        <!-- Gradient header area -->
+        <div class="gradient-header">
+          <div class="logo-new"><span>🦞</span></div>
+          <div class="welcome-title-new">嗨，有什么可以帮你？</div>
+          <div class="welcome-desc-new">我是你的 AI 助手，可以帮你完成各种任务</div>
+        </div>
+
+        <!-- Input (collapsed) -->
+        <div class="input-new-box">
+          <span class="icon-btn-sm">🎤</span>
+          <span class="input-placeholder" style="flex:1">发送消息或输入 / 使用命令...</span>
+          <span class="icon-btn-sm">⊕</span>
+        </div>
+
+        <!-- Quick actions (mobile-style chips) -->
+        <div class="qa-row-new">
+          <div class="qa-chip-new">
+            <div class="qa-chip-icon">📊</div>
+            数据分析
+          </div>
+          <div class="qa-chip-new">
+            <div class="qa-chip-icon">📝</div>
+            生成PPT
+          </div>
+          <div class="qa-chip-new">
+            <div class="qa-chip-icon">🎓</div>
+            教育辅导
+          </div>
+          <div class="qa-chip-new">
+            <div class="qa-chip-icon">🌐</div>
+            生成网页
+          </div>
+          <div class="qa-chip-new">
+            <div class="qa-chip-icon">✏️</div>
+            写作助手
+          </div>
+          <div class="qa-chip-new">
+            <div class="qa-chip-icon">🔍</div>
+            网页搜索
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-title">设计说明</div>
+    <div class="note-text">
+      1. <b>渐变头图</b>：使用手机端 Figma 设计稿的 Header 渐变（#F2EDFC → #F6F5F7 → #F7FBFC → #DCF0FA），统一品牌调性<br>
+      2. <b>Logo</b>：56px 蓝色渐变背景，与手机端 icon_huge 56dp 一致<br>
+      3. <b>Quick Action Chips</b>：corner_xl 20px 圆角，白色无边框卡片，与手机端 QuickActionChip 样式对齐<br>
+      4. <b>图标容器</b>：28×28px，8px 圆角，0.5px 边框，对齐手机端 24dp 图标 + 7.2dp 圆角<br>
+      5. <b>输入框</b>：采用折叠态样式，20px 圆角，蓝色系投影
+    </div>
+  </div>
+</div>
+</body>
+</html>

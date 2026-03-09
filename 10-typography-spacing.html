@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>调整点 10：字体与间距系统</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; background: #F0F0F0; }
+.container { width: 1440px; margin: 0 auto; padding: 40px; }
+h1 { font-size: 28px; font-weight: 700; color: #1C1F28; margin-bottom: 8px; }
+.subtitle { font-size: 14px; color: #636878; margin-bottom: 40px; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tag-mobile { background: rgba(52,130,255,0.1); color: #3482FF; }
+
+.section { background: #FFF; border-radius: 16px; padding: 28px 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 32px; }
+.section-title { font-size: 18px; font-weight: 600; color: #1C1F28; margin-bottom: 20px; }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; color: #636878; font-weight: 600; padding: 10px 12px; border-bottom: 2px solid #E9EBF0; }
+td { font-size: 13px; color: #1C1F28; padding: 10px 12px; border-bottom: 1px solid #F0F0F0; vertical-align: top; }
+code { font-family: 'SF Mono', monospace; font-size: 11px; background: #F2F3F7; padding: 2px 6px; border-radius: 4px; }
+.highlight { background: rgba(52,130,255,0.06); }
+.mismatch { color: #EF4444; }
+.match { color: #10A37F; }
+
+/* Type scale preview */
+.type-preview { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.type-row { display: flex; align-items: baseline; gap: 16px; padding: 8px 0; border-bottom: 1px solid #F5F5F5; }
+.type-label { width: 140px; font-size: 11px; color: #636878; flex-shrink: 0; }
+.type-sample-mobile { color: #3482FF; }
+.type-sample-pc { color: #0D9488; }
+.type-sample-new { color: #1C1F28; }
+
+/* Spacing scale visual */
+.spacing-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.spacing-label { width: 80px; font-size: 11px; color: #636878; text-align: right; }
+.spacing-bar { height: 24px; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 10px; color: #FFF; font-weight: 600; }
+.spacing-bar-mobile { background: rgba(52,130,255,0.6); }
+.spacing-bar-pc { background: rgba(13,148,136,0.6); }
+
+/* Corner radius visual */
+.corner-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 16px; }
+.corner-item {
+  aspect-ratio: 1;
+  background: rgba(52,130,255,0.06);
+  border: 2px solid rgba(52,130,255,0.2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 11px; color: #3482FF; font-weight: 600;
+}
+.corner-name { font-size: 10px; color: #636878; margin-top: 4px; }
+
+.note { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 0 12px 12px 0; margin-top: 32px; }
+.note-title { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px; }
+.note-text { font-size: 13px; color: #78350F; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>调整点 10：字体排版与间距系统</h1>
+  <p class="subtitle">建立结构化的设计 Token 系统，与手机端的 dimens.xml / Type.kt 体系对齐</p>
+
+  <!-- Typography -->
+  <div class="section">
+    <div class="section-title">字体排版对照 <span class="tag tag-mobile">对齐手机端 Type.kt</span></div>
+    <table>
+      <thead>
+        <tr><th>语义名称</th><th>手机端</th><th>当前 PC (Tailwind)</th><th>建议 PC Token</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>headlineLarge</td>
+          <td><code>24sp Bold 32sp-lh</code></td>
+          <td><code>text-3xl (30px)</code></td>
+          <td class="highlight"><code>24px/32px Bold</code></td>
+          <td>首页标题</td>
+        </tr>
+        <tr>
+          <td>headlineMedium</td>
+          <td><code>20sp Bold 28sp-lh</code></td>
+          <td><code>text-xl (20px)</code></td>
+          <td class="highlight"><code>20px/28px Bold</code></td>
+          <td>设置页标题</td>
+        </tr>
+        <tr>
+          <td>headlineSmall</td>
+          <td><code>18sp Bold 26sp-lh</code></td>
+          <td>无对应</td>
+          <td class="highlight"><code>18px/26px Bold</code></td>
+          <td>分区标题</td>
+        </tr>
+        <tr>
+          <td>titleLarge</td>
+          <td><code>18sp Semi 26sp-lh</code></td>
+          <td><code>text-base font-semibold</code></td>
+          <td class="highlight"><code>18px/26px 600</code></td>
+          <td>对话标题</td>
+        </tr>
+        <tr>
+          <td>titleMedium</td>
+          <td><code>15sp Semi 22sp-lh</code></td>
+          <td><code>text-sm font-medium</code></td>
+          <td class="highlight"><code>15px/22px 600</code></td>
+          <td>导航项、卡片标题</td>
+        </tr>
+        <tr>
+          <td>bodyLarge</td>
+          <td><code>15sp Normal 22sp-lh</code></td>
+          <td><code>text-sm (14px)</code></td>
+          <td class="highlight"><code>15px/22px 400</code></td>
+          <td>正文、消息文本</td>
+        </tr>
+        <tr>
+          <td>bodyMedium</td>
+          <td><code>13sp Normal 18sp-lh</code></td>
+          <td><code>text-xs (12px)</code></td>
+          <td class="highlight"><code>13px/18px 400</code></td>
+          <td>次要文本、描述</td>
+        </tr>
+        <tr>
+          <td>bodySmall</td>
+          <td><code>11sp Normal 16sp-lh</code></td>
+          <td><code>text-[10px]</code></td>
+          <td class="highlight"><code>11px/16px 400</code></td>
+          <td>辅助、时间戳</td>
+        </tr>
+        <tr>
+          <td>labelLarge</td>
+          <td><code>13sp Medium 18sp-lh</code></td>
+          <td><code>text-xs font-medium</code></td>
+          <td class="highlight"><code>13px/18px 500</code></td>
+          <td>按钮文字、徽标</td>
+        </tr>
+        <tr>
+          <td>labelSmall</td>
+          <td><code>10sp Medium 14sp-lh</code></td>
+          <td><code>text-[10px]</code></td>
+          <td class="highlight"><code>10px/14px 500</code></td>
+          <td>标签、微型文字</td>
+        </tr>
+        <tr>
+          <td>assistantBody</td>
+          <td><code>16sp w330 26sp-lh</code></td>
+          <td>Prose default</td>
+          <td class="highlight"><code>15px/26px 400</code></td>
+          <td>AI 回复正文</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Spacing -->
+  <div class="section">
+    <div class="section-title">间距系统对照 <span class="tag tag-mobile">对齐手机端 dimens.xml</span></div>
+    <table>
+      <thead>
+        <tr><th>Token</th><th>手机端</th><th>当前 PC (Tailwind)</th><th>建议 PC Token</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>xxs</td><td><code>2dp</code></td><td><code>0.5 (2px)</code></td><td class="match"><code>2px</code> ✓</td><td>微间距</td></tr>
+        <tr><td>xs</td><td><code>4dp</code></td><td><code>1 (4px)</code></td><td class="match"><code>4px</code> ✓</td><td>紧凑间距</td></tr>
+        <tr><td>s</td><td><code>8dp</code></td><td><code>2 (8px)</code></td><td class="match"><code>8px</code> ✓</td><td>组件内间距</td></tr>
+        <tr><td>m</td><td><code>12dp</code></td><td><code>3 (12px)</code></td><td class="match"><code>12px</code> ✓</td><td>卡片内边距</td></tr>
+        <tr><td>l</td><td><code>16dp</code></td><td><code>4 (16px)</code></td><td class="match"><code>16px</code> ✓</td><td>标准间距</td></tr>
+        <tr><td>xl</td><td><code>20dp</code></td><td><code>5 (20px)</code></td><td class="match"><code>20px</code> ✓</td><td>区域间距</td></tr>
+        <tr><td>xxl</td><td><code>24dp</code></td><td><code>6 (24px)</code></td><td class="match"><code>24px</code> ✓</td><td>大区间距</td></tr>
+        <tr><td>xxxl</td><td><code>32dp</code></td><td><code>8 (32px)</code></td><td class="match"><code>32px</code> ✓</td><td>分区间距</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;font-size:13px;color:#10A37F;font-weight:500">✓ Tailwind 的间距 scale 与手机端天然对齐，无需额外调整</div>
+  </div>
+
+  <!-- Corner Radius -->
+  <div class="section">
+    <div class="section-title">圆角系统对照</div>
+    <table>
+      <thead>
+        <tr><th>Token</th><th>手机端</th><th>当前 PC (Tailwind)</th><th>建议 PC</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>corner_xs</td><td><code>4dp</code></td><td><code>rounded (4px)</code></td><td class="match"><code>4px</code> ✓</td><td>小标签</td></tr>
+        <tr><td>corner_s</td><td><code>8dp</code></td><td><code>rounded-lg (8px)</code></td><td class="match"><code>8px</code> ✓</td><td>代码块、按钮</td></tr>
+        <tr><td>corner_m</td><td><code>12dp</code></td><td><code>rounded-xl (12px)</code></td><td class="match"><code>12px</code> ✓</td><td>卡片</td></tr>
+        <tr><td>corner_l</td><td><code>16dp</code></td><td><code>rounded-2xl (16px)</code></td><td class="match"><code>16px</code> ✓</td><td>气泡、工具卡片</td></tr>
+        <tr class="highlight">
+          <td>corner_xl</td>
+          <td><code>20dp</code></td>
+          <td>无直接对应</td>
+          <td class="mismatch"><code>→ 20px</code></td>
+          <td>输入框、快捷操作</td>
+        </tr>
+        <tr><td>corner_xxl</td><td><code>24dp</code></td><td><code>rounded-3xl (24px)</code></td><td class="match"><code>24px</code> ✓</td><td>全圆角</td></tr>
+      </tbody>
+    </table>
+    <div class="corner-grid" style="margin-top: 20px">
+      <div class="corner-item" style="border-radius: 4px;">4px<div class="corner-name">xs</div></div>
+      <div class="corner-item" style="border-radius: 8px;">8px<div class="corner-name">s</div></div>
+      <div class="corner-item" style="border-radius: 12px;">12px<div class="corner-name">m</div></div>
+      <div class="corner-item" style="border-radius: 16px;">16px<div class="corner-name">l</div></div>
+      <div class="corner-item" style="border-radius: 20px; border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.06);">20px<div class="corner-name">xl (新增)</div></div>
+      <div class="corner-item" style="border-radius: 24px;">24px<div class="corner-name">xxl</div></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-title">实施说明</div>
+    <div class="note-text">
+      1. 在 <code>tailwind.config.js</code> 的 <code>extend.fontSize</code> 中定义与手机端对齐的 semantic token（headlineLarge 等）<br>
+      2. 在 <code>extend.borderRadius</code> 中添加 <code>'xl-plus': '20px'</code> 对应手机端 corner_xl<br>
+      3. 间距和圆角系统大部分已自然对齐（Tailwind 的 4px 增量与 Android dp 一致），主要需要处理字体大小对齐<br>
+      4. 消息文本从 14px 调整为 15px，与手机端 bodyLarge 15sp 一致<br>
+      5. 考虑添加 <code>letterSpacing</code> 配置以匹配手机端的字距设定
+    </div>
+  </div>
+</div>
+</body>
+</html>

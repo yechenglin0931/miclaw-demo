@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>调整点 8：动画与过渡</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; background: #F0F0F0; }
+.container { width: 1440px; margin: 0 auto; padding: 40px; }
+h1 { font-size: 28px; font-weight: 700; color: #1C1F28; margin-bottom: 8px; }
+.subtitle { font-size: 14px; color: #636878; margin-bottom: 40px; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tag-mobile { background: rgba(52,130,255,0.1); color: #3482FF; }
+
+.demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }
+.demo-card {
+  background: #FFF; border-radius: 16px; padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.demo-title { font-size: 15px; font-weight: 600; color: #1C1F28; margin-bottom: 4px; }
+.demo-desc { font-size: 12px; color: #636878; margin-bottom: 16px; }
+.demo-area { background: #F7F7F7; border-radius: 12px; padding: 20px; position: relative; overflow: hidden; min-height: 120px; }
+.demo-btn {
+  padding: 8px 16px; border-radius: 8px; border: none;
+  background: #3482FF; color: #FFF; font-size: 12px; font-weight: 500;
+  cursor: pointer; margin-top: 12px; transition: all 0.15s;
+}
+.demo-btn:hover { background: #2B6FE0; }
+.demo-btn-outline {
+  padding: 8px 16px; border-radius: 8px;
+  border: 1px solid #3482FF; background: transparent; color: #3482FF;
+  font-size: 12px; font-weight: 500; cursor: pointer; margin-top: 12px; transition: all 0.15s;
+}
+
+/* Animation 1: Page slide */
+.page-slide-container { display: flex; gap: 8px; height: 100px; }
+.page-slide-box {
+  flex: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500;
+}
+.page-a { background: rgba(52,130,255,0.08); color: #3482FF; }
+.page-b { background: rgba(16,163,127,0.08); color: #10A37F; }
+
+@keyframes slideInRight {
+  from { transform: translateX(25%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-25%); opacity: 0; }
+}
+@keyframes fadeInUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.slide-in { animation: slideInRight 0.3s ease-out; }
+
+/* Animation 2: Tool expand */
+@keyframes expandDown {
+  from { max-height: 0; opacity: 0; }
+  to { max-height: 200px; opacity: 1; }
+}
+.tool-expand { animation: expandDown 0.2s ease-out; overflow: hidden; }
+.tool-shrink { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.15s ease; }
+
+/* Animation 3: Streaming cursor */
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.streaming-cursor {
+  display: inline-block;
+  width: 2px; height: 16px;
+  background: #3482FF;
+  animation: blink 0.5s linear infinite;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+}
+
+/* Animation 4: Thinking dots */
+@keyframes pulseDot { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+.thinking-dots { display: flex; gap: 4px; }
+.thinking-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #3482FF;
+}
+.thinking-dot:nth-child(1) { animation: pulseDot 0.8s ease infinite 0s; }
+.thinking-dot:nth-child(2) { animation: pulseDot 0.8s ease infinite 0.2s; }
+.thinking-dot:nth-child(3) { animation: pulseDot 0.8s ease infinite 0.4s; }
+
+/* Animation 5: Button pulse (stop) */
+@keyframes stopPulse {
+  0%, 100% { background: #EF4444; }
+  50% { background: rgba(239,68,68,0.6); }
+}
+.stop-btn-pulse {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #EF4444; border: none;
+  display: flex; align-items: center; justify-content: center;
+  animation: stopPulse 0.8s ease infinite;
+}
+.stop-btn-pulse span { display: block; width: 10px; height: 10px; background: #FFF; border-radius: 2px; }
+
+/* Animation 6: Scroll to bottom */
+@keyframes scaleInBounce {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.scroll-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #FFF; border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: rgba(0,0,0,0.5);
+  animation: scaleInBounce 0.2s ease-out;
+}
+
+/* Animation 7: Sidebar toggle */
+@keyframes sidebarSlide {
+  from { width: 0; opacity: 0; }
+  to { width: 240px; opacity: 1; }
+}
+
+/* Animation 8: Message fade-in */
+@keyframes messageFadeIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.param-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.param-table th { text-align: left; font-size: 12px; color: #636878; padding: 8px 12px; border-bottom: 2px solid #E9EBF0; font-weight: 600; }
+.param-table td { font-size: 13px; color: #1C1F28; padding: 8px 12px; border-bottom: 1px solid #F0F0F0; }
+.param-table code { font-family: 'SF Mono', monospace; font-size: 11px; background: #F2F3F7; padding: 2px 6px; border-radius: 4px; }
+
+.note { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 0 12px 12px 0; margin-top: 32px; }
+.note-title { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px; }
+.note-text { font-size: 13px; color: #78350F; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>调整点 8：动画与过渡系统</h1>
+  <p class="subtitle">当前 PC 端几乎无过渡动画（sidebar-transition: none），需对齐手机端的运动设计规范</p>
+
+  <div class="demo-grid">
+    <!-- 1: Page transition -->
+    <div class="demo-card">
+      <div class="demo-title">1. 页面切换过渡 <span class="tag tag-mobile">手机端 300ms slide</span></div>
+      <div class="demo-desc">设置子页面、会话切换时使用水平滑入/滑出</div>
+      <div class="demo-area">
+        <div id="page-demo" style="display:flex;gap:8px;height:80px">
+          <div class="page-slide-box page-a slide-in">主页面</div>
+          <div class="page-slide-box page-b" style="opacity:0.3">子页面</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#636878;margin-top:8px">
+        进入：<code>slideInHorizontally(25%) + fadeIn</code> 300ms<br>
+        退出：<code>slideOutHorizontally(25%) + fadeOut</code> 200ms
+      </div>
+    </div>
+
+    <!-- 2: Tool card expand -->
+    <div class="demo-card">
+      <div class="demo-title">2. 工具卡片展开/收起 <span class="tag tag-mobile">手机端 200ms/150ms</span></div>
+      <div class="demo-desc">IntermediateStepsBlock 和 ToolCallCard 的展开动画</div>
+      <div class="demo-area">
+        <div style="background:#FFF;border-radius:12px;padding:10px 14px;border:1px solid rgba(0,0,0,0.06)">
+          <div style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <span style="font-size:14px">💭</span>
+            <span style="font-size:12px;color:rgba(0,0,0,0.8);font-weight:500;flex:1">思考与执行</span>
+            <span style="font-size:12px;color:rgba(0,0,0,0.3)">▾</span>
+          </div>
+          <div class="tool-expand" style="margin-top:8px;border-top:1px solid rgba(0,0,0,0.06);padding-top:8px">
+            <div style="font-size:11px;color:rgba(0,0,0,0.5)">Read → Grep → Bash</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#636878;margin-top:8px">
+        展开：<code>expandVertically + fadeIn</code> 200ms<br>
+        收起：<code>shrinkVertically + fadeOut</code> 150ms
+      </div>
+    </div>
+
+    <!-- 3: Streaming cursor -->
+    <div class="demo-card">
+      <div class="demo-title">3. 流式输出光标 <span class="tag tag-mobile">手机端 500ms blink</span></div>
+      <div class="demo-desc">AI 回复流式输出时的文末闪烁光标</div>
+      <div class="demo-area">
+        <div style="font-size:14px;color:#1C1F28;line-height:1.7">
+          好的，让我分析这段代码的性能问题<span class="streaming-cursor"></span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#636878;margin-top:8px">
+        <code>alpha: 1 ↔ 0</code> 500ms LinearEasing infinite
+      </div>
+    </div>
+
+    <!-- 4: Thinking indicator -->
+    <div class="demo-card">
+      <div class="demo-title">4. 思考中指示器 <span class="tag tag-mobile">手机端 800ms pulse</span></div>
+      <div class="demo-desc">Agent 思考时的脉冲圆点动画</div>
+      <div class="demo-area">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="thinking-dots">
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+          </div>
+          <span style="font-size:13px;color:rgba(0,0,0,0.5)">思考中...</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#636878;margin-top:8px">
+        <code>alpha: 0.3 ↔ 1.0</code> 800ms 三点交错延迟
+      </div>
+    </div>
+
+    <!-- 5: Stop button pulse -->
+    <div class="demo-card">
+      <div class="demo-title">5. 停止按钮脉冲 <span class="tag tag-mobile">手机端 800ms</span></div>
+      <div class="demo-desc">Agent 执行中，停止按钮红色脉冲提示可中断</div>
+      <div class="demo-area" style="display:flex;align-items:center;gap:12px">
+        <div class="stop-btn-pulse"><span></span></div>
+        <span style="font-size:12px;color:rgba(0,0,0,0.5)">点击停止执行</span>
+      </div>
+      <div style="font-size:11px;color:#636878;margin-top:8px">
+        <code>ErrorRed ↔ alpha(0.6)</code> 800ms FastOutSlowIn
+      </div>
+    </div>
+
+    <!-- 6: Scroll to bottom -->
+    <div class="demo-card">
+      <div class="demo-title">6. 滚动到底部按钮 <span class="tag tag-mobile">手机端 scale(0.6) + fade</span></div>
+      <div class="demo-desc">滚动超过半屏时在右下角出现</div>
+      <div class="demo-area" style="display:flex;align-items:center;justify-content:center">
+        <div class="scroll-btn">↓</div>
+      </div>
+      <div style="font-size:11px;color:#636878;margin-top:8px">
+        出现：<code>scaleIn(0.6) + fadeIn</code><br>
+        消失：<code>scaleOut(0.6) + fadeOut</code>
+      </div>
+    </div>
+
+    <!-- 7: Sidebar toggle -->
+    <div class="demo-card">
+      <div class="demo-title">7. 侧边栏展开/收起</div>
+      <div class="demo-desc">当前无过渡（transition: none），改为平滑动画</div>
+      <div class="demo-area" style="display:flex;gap:8px;height:80px">
+        <div style="width:60px;background:rgba(52,130,255,0.06);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#3482FF;transition:width 0.25s cubic-bezier(0.4,0,0.2,1)">侧栏</div>
+        <div style="flex:1;background:rgba(0,0,0,0.03);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(0,0,0,0.3)">主内容</div>
+      </div>
+      <div style="font-size:11px;color:#636878;margin-top:8px">
+        <code>width transition</code> 250ms cubic-bezier(0.4, 0, 0.2, 1)
+      </div>
+    </div>
+
+    <!-- 8: New message -->
+    <div class="demo-card">
+      <div class="demo-title">8. 新消息出现</div>
+      <div class="demo-desc">新消息从底部淡入上滑</div>
+      <div class="demo-area">
+        <div style="animation: messageFadeIn 0.25s ease-out">
+          <div style="background:rgba(52,130,255,0.08);border-radius:12px;padding:10px 14px;max-width:200px;margin-left:auto;font-size:12px;color:#1C1F28">
+            新消息内容
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#636878;margin-top:8px">
+        <code>translateY(8px) + fadeIn</code> 250ms ease-out
+      </div>
+    </div>
+  </div>
+
+  <!-- Parameter summary -->
+  <div style="background:#FFF;border-radius:16px;padding:24px 32px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:32px">
+    <div style="font-size:16px;font-weight:600;color:#1C1F28;margin-bottom:16px">动画参数汇总</div>
+    <table class="param-table">
+      <thead>
+        <tr><th>动画</th><th>手机端参数</th><th>PC 端建议</th><th>缓动函数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>页面切换</td><td><code>300ms slide + fade</code></td><td><code>300ms</code></td><td><code>ease-out</code></td></tr>
+        <tr><td>工具展开</td><td><code>tween(200)</code></td><td><code>200ms</code></td><td><code>ease-out</code></td></tr>
+        <tr><td>工具收起</td><td><code>tween(150)</code></td><td><code>150ms</code></td><td><code>ease-in</code></td></tr>
+        <tr><td>流式光标</td><td><code>500ms blink</code></td><td><code>500ms</code></td><td><code>linear</code></td></tr>
+        <tr><td>思考脉冲</td><td><code>800ms alpha</code></td><td><code>800ms</code></td><td><code>ease</code></td></tr>
+        <tr><td>停止脉冲</td><td><code>800ms</code></td><td><code>800ms</code></td><td><code>cubic-bezier(0.4,0,0.2,1)</code></td></tr>
+        <tr><td>输入框切换</td><td><code>tween(120)</code></td><td><code>120ms</code></td><td><code>ease</code></td></tr>
+        <tr><td>侧边栏</td><td>N/A (手机无侧栏)</td><td><code>250ms</code></td><td><code>cubic-bezier(0.4,0,0.2,1)</code></td></tr>
+        <tr><td>新消息</td><td>N/A</td><td><code>250ms</code></td><td><code>ease-out</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <div class="note-title">实施说明</div>
+    <div class="note-text">
+      1. 将 <code>.sidebar-transition { transition: none; }</code> 改为 <code>transition: width 250ms cubic-bezier(0.4,0,0.2,1)</code><br>
+      2. 新增 CSS keyframes：slideInRight、slideOutLeft、expandDown、shrinkUp、blink、pulseDot、stopPulse、messageFadeIn<br>
+      3. 思考指示器替换当前的 streaming-bar，使用三点脉冲动画（更直观）<br>
+      4. 添加 <code>prefers-reduced-motion: reduce</code> 媒体查询支持，尊重系统无障碍设置
+    </div>
+  </div>
+</div>
+</body>
+</html>

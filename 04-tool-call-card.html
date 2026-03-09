@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>调整点 4：工具调用卡片与中间步骤</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; background: #F0F0F0; }
+.container { width: 1440px; margin: 0 auto; padding: 40px; }
+h1 { font-size: 28px; font-weight: 700; color: #1C1F28; margin-bottom: 8px; }
+.subtitle { font-size: 14px; color: #636878; margin-bottom: 40px; }
+.comparison { display: flex; gap: 40px; margin-bottom: 48px; }
+.chat-panel { flex: 1; background: #F7F7F7; border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.panel-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; padding-bottom: 12px; }
+.panel-label.before { color: #0D9488; border-bottom: 2px solid #0D9488; }
+.panel-label.after { color: #3482FF; border-bottom: 2px solid #3482FF; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tag-mobile { background: rgba(52,130,255,0.1); color: #3482FF; }
+
+/* Current PC tool call - separate blocks */
+.tool-block-current {
+  background: #FFF;
+  border-radius: 12px;
+  border: 1px solid #E9EBF0;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.tool-header-current {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tool-header-current:hover { background: #F9FAFB; }
+.tool-icon-current {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: rgba(13,148,136,0.08); color: #0D9488;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0;
+}
+.tool-name-current { font-size: 12px; color: #1C1F28; font-weight: 500; flex: 1; font-family: 'SF Mono', monospace; }
+.tool-status { font-size: 11px; display: flex; align-items: center; gap: 4px; }
+.tool-status-ok { color: #10A37F; }
+.tool-status-run { color: #F59E0B; }
+.tool-chevron { color: #8E8EA0; font-size: 14px; }
+
+.tool-detail-current {
+  padding: 0 14px 12px;
+  border-top: 1px solid #F0F0F0;
+}
+.tool-detail-label { font-size: 10px; color: #8E8EA0; text-transform: uppercase; letter-spacing: 0.5px; margin: 10px 0 4px; font-weight: 600; }
+.tool-detail-code {
+  font-size: 11px; font-family: 'SF Mono', monospace; color: #1C1F28;
+  background: #F6F7FA; border-radius: 6px; padding: 8px 10px;
+  white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto;
+}
+
+/* Thinking block current */
+.thinking-current {
+  background: transparent;
+  border: 1px solid #E9EBF0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.thinking-label { font-size: 11px; color: #8E8EA0; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.thinking-text { font-size: 12px; color: #636878; margin-top: 6px; line-height: 1.5; }
+
+/* NEW: Intermediate steps block (mobile-style) */
+.intermediate-block {
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.intermediate-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.intermediate-header:hover { background: rgba(0,0,0,0.02); }
+.intermediate-icon {
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: rgba(0,0,0,0.5);
+}
+.intermediate-title { font-size: 13px; color: rgba(0,0,0,0.8); font-weight: 500; flex: 1; }
+.intermediate-summary {
+  font-size: 12px; color: rgba(0,0,0,0.4);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 240px;
+}
+.intermediate-chevron { color: rgba(0,0,0,0.3); font-size: 16px; transition: transform 0.2s; }
+.intermediate-chevron.expanded { transform: rotate(180deg); }
+
+/* Expanded content */
+.intermediate-content {
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding: 12px 16px;
+}
+.step-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0;
+}
+.step-item + .step-item { border-top: 1px solid rgba(0,0,0,0.04); }
+.step-icon {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; flex-shrink: 0; margin-top: 2px;
+}
+.step-icon-think { background: rgba(52,130,255,0.08); color: #3482FF; }
+.step-icon-tool { background: rgba(16,163,127,0.08); color: #10A37F; }
+.step-icon-error { background: rgba(239,68,68,0.08); color: #EF4444; }
+.step-info { flex: 1; min-width: 0; }
+.step-name { font-size: 12px; color: rgba(0,0,0,0.8); font-weight: 500; }
+.step-desc { font-size: 11px; color: rgba(0,0,0,0.4); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-status { font-size: 11px; display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.step-time { font-size: 10px; color: rgba(0,0,0,0.3); }
+
+/* Tool card new style */
+.tool-card-new {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  overflow: hidden;
+  margin-top: 8px;
+}
+.tool-card-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+.tool-card-header:hover { background: rgba(0,0,0,0.02); }
+.tool-card-icon {
+  width: 20px; height: 20px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+}
+.tool-card-name { font-size: 13px; color: rgba(0,0,0,0.8); font-weight: 500; flex: 1; }
+.tool-card-status-ok { color: #10A37F; font-size: 12px; }
+.tool-card-chevron { color: rgba(0,0,0,0.3); font-size: 14px; }
+
+.tool-card-detail {
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding: 12px 16px;
+}
+.tool-param-label { font-size: 10px; color: rgba(0,0,0,0.4); font-weight: 500; margin-bottom: 4px; }
+.tool-param-value {
+  font-size: 11px; font-family: 'SF Mono', monospace;
+  color: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.03);
+  border-radius: 8px; padding: 8px 10px;
+  white-space: pre-wrap; word-break: break-all;
+}
+.tool-divider { height: 1px; background: rgba(0,0,0,0.06); margin: 8px 0; }
+
+.spinner {
+  width: 14px; height: 14px; border: 2px solid rgba(52,130,255,0.2);
+  border-top-color: #3482FF; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.note { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 0 12px 12px 0; margin-top: 32px; }
+.note-title { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px; }
+.note-text { font-size: 13px; color: #78350F; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>调整点 4：工具调用卡片与中间步骤</h1>
+  <p class="subtitle">将分散的 thinking 块和工具调用合并为「中间步骤」折叠组，与手机端 IntermediateStepsBlock 对齐</p>
+
+  <div class="comparison">
+    <!-- BEFORE -->
+    <div class="chat-panel" style="background:#F6F7FA">
+      <div class="panel-label before">当前 PC 端 — 分散展示</div>
+
+      <div class="thinking-current">
+        <div class="thinking-label">💭 思考过程</div>
+        <div class="thinking-text">用户需要分析代码性能，我需要先读取文件内容...</div>
+      </div>
+
+      <div class="tool-block-current">
+        <div class="tool-header-current">
+          <div class="tool-icon-current">📄</div>
+          <div class="tool-name-current">Read</div>
+          <div class="tool-status tool-status-ok">✓ 完成</div>
+          <div class="tool-chevron">▾</div>
+        </div>
+        <div class="tool-detail-current">
+          <div class="tool-detail-label">输入</div>
+          <div class="tool-detail-code">{"path": "/src/app.tsx", "offset": 1, "limit": 50}</div>
+          <div class="tool-detail-label">结果</div>
+          <div class="tool-detail-code">import React from 'react';\nimport { useState }...</div>
+        </div>
+      </div>
+
+      <div class="thinking-current">
+        <div class="thinking-label">💭 思考过程</div>
+        <div class="thinking-text">发现了性能问题，需要查看 useEffect 的依赖...</div>
+      </div>
+
+      <div class="tool-block-current">
+        <div class="tool-header-current">
+          <div class="tool-icon-current">🔍</div>
+          <div class="tool-name-current">Grep</div>
+          <div class="tool-status tool-status-ok">✓ 完成</div>
+          <div class="tool-chevron">▾</div>
+        </div>
+      </div>
+
+      <div class="tool-block-current">
+        <div class="tool-header-current">
+          <div class="tool-icon-current">💻</div>
+          <div class="tool-name-current">Bash</div>
+          <div class="tool-status tool-status-ok">✓ 完成</div>
+          <div class="tool-chevron">▾</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:16px;padding:12px;background:rgba(13,148,136,0.05);border-radius:12px">
+        <div style="font-size:12px;color:#636878">thinking 和 tool call 分散显示<br>信息密度低，滚动距离长</div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div class="chat-panel" style="background:#F7F7F7">
+      <div class="panel-label after">调整后 PC 端 — 分组折叠 <span class="tag tag-mobile">对齐手机端</span></div>
+
+      <!-- Collapsed state -->
+      <div style="font-size:12px;color:#3482FF;font-weight:600;margin-bottom:8px;text-align:center">折叠态（默认）</div>
+      <div class="intermediate-block">
+        <div class="intermediate-header">
+          <div class="intermediate-icon">💭</div>
+          <div class="intermediate-title">思考与执行</div>
+          <div class="intermediate-summary">Read → Grep → Bash · 3 步完成</div>
+          <div class="intermediate-chevron">▾</div>
+        </div>
+      </div>
+
+      <!-- Expanded state -->
+      <div style="font-size:12px;color:#10A37F;font-weight:600;margin:20px 0 8px;text-align:center">展开态（点击展开）</div>
+      <div class="intermediate-block">
+        <div class="intermediate-header">
+          <div class="intermediate-icon">💭</div>
+          <div class="intermediate-title">思考与执行</div>
+          <div class="intermediate-chevron expanded">▾</div>
+        </div>
+        <div class="intermediate-content">
+          <!-- Step 1: Thinking -->
+          <div class="step-item">
+            <div class="step-icon step-icon-think">💭</div>
+            <div class="step-info">
+              <div class="step-name">思考过程</div>
+              <div class="step-desc">用户需要分析代码性能，我需要先读取文件内容...</div>
+            </div>
+          </div>
+          <!-- Step 2: Tool -->
+          <div class="step-item">
+            <div class="step-icon step-icon-tool">📄</div>
+            <div class="step-info">
+              <div class="step-name">Read</div>
+              <div class="step-desc">/src/app.tsx</div>
+            </div>
+            <div class="step-status tool-status-ok">✓ <span class="step-time">1.2s</span></div>
+          </div>
+          <!-- Step 3: Thinking -->
+          <div class="step-item">
+            <div class="step-icon step-icon-think">💭</div>
+            <div class="step-info">
+              <div class="step-name">思考过程</div>
+              <div class="step-desc">发现了性能问题，需要查看 useEffect 的依赖...</div>
+            </div>
+          </div>
+          <!-- Step 4: Tool -->
+          <div class="step-item">
+            <div class="step-icon step-icon-tool">🔍</div>
+            <div class="step-info">
+              <div class="step-name">Grep</div>
+              <div class="step-desc">pattern: "useEffect" in /src/</div>
+            </div>
+            <div class="step-status tool-status-ok">✓ <span class="step-time">0.8s</span></div>
+          </div>
+          <!-- Step 5: Tool -->
+          <div class="step-item">
+            <div class="step-icon step-icon-tool">💻</div>
+            <div class="step-info">
+              <div class="step-name">Bash</div>
+              <div class="step-desc">npm run lint -- --fix</div>
+            </div>
+            <div class="step-status tool-status-ok">✓ <span class="step-time">3.4s</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Running state -->
+      <div style="font-size:12px;color:#F59E0B;font-weight:600;margin:20px 0 8px;text-align:center">执行中状态</div>
+      <div class="intermediate-block">
+        <div class="intermediate-header">
+          <div class="intermediate-icon">💭</div>
+          <div class="intermediate-title">思考与执行</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="spinner"></div>
+            <span style="font-size:12px;color:rgba(0,0,0,0.4)">Bash 执行中...</span>
+          </div>
+          <div class="intermediate-chevron">▾</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:16px;padding:12px;background:rgba(52,130,255,0.05);border-radius:12px">
+        <div style="font-size:12px;color:#636878">thinking + 工具调用合并为一个折叠组<br>默认折叠，信息密度高，可展开查看细节</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-title">实施说明</div>
+    <div class="note-text">
+      1. 新建 <code>IntermediateStepsBlock</code> 组件，将连续的 thinking 和 tool_use 消息合并为一组<br>
+      2. 折叠态：单行摘要（工具名链 + 步骤数），可横向滚动<br>
+      3. 展开态：垂直列表，每项显示类型图标 + 名称 + 摘要 + 状态/耗时<br>
+      4. 点击单个工具项可继续展开查看参数和结果（二级折叠）<br>
+      5. 动画：expandVertically + fadeIn (200ms)，与手机端 tween(200) 对齐<br>
+      6. 执行中：折叠态显示 spinner + 当前工具名
+    </div>
+  </div>
+</div>
+</body>
+</html>
