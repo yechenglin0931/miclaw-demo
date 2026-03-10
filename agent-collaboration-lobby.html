@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>MiClaw · Agent 协作大厅</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;background:#0c0e14;color:#e0e4ef}
+
+/* === App Shell === */
+.app{display:flex;height:100vh}
+.sidebar{width:210px;flex-shrink:0;background:#12141c;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;padding:12px;user-select:none}
+.sd{height:28px;-webkit-app-region:drag}
+.st{display:flex;gap:6px;margin-bottom:8px}
+.sb{width:28px;height:28px;border-radius:8px;border:none;background:0 0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);font-size:14px;transition:.15s}
+.sb:hover{background:rgba(255,255,255,.06)}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:13px;color:rgba(255,255,255,.45);cursor:pointer;transition:.15s}
+.ni:hover{background:rgba(255,255,255,.04)}
+.ni.ac{background:rgba(52,130,255,.12);color:#6BA3FF;font-weight:500}
+.ni .ic{font-size:15px;width:20px;text-align:center}
+.nb{font-size:9px;font-weight:700;background:#3482FF;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto}
+.ss{flex:1;overflow-y:auto;margin-top:8px}
+.sg{font-size:10px;color:rgba(255,255,255,.2);text-transform:uppercase;padding:8px 10px 4px;letter-spacing:.5px}
+.si{padding:7px 10px;border-radius:8px;font-size:12px;color:rgba(255,255,255,.3);cursor:pointer;transition:.15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si:hover{background:rgba(255,255,255,.04);color:rgba(255,255,255,.5)}
+.sbot{margin-top:auto;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid rgba(255,255,255,.06);background:#12141c;z-index:10}
+.mh-l{display:flex;align-items:center;gap:10px}
+.mh-t{font-size:15px;font-weight:600;color:#e0e4ef}
+.mh-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(52,130,255,.15);color:#6BA3FF}
+.mh-r{display:flex;gap:4px}
+.hb{width:32px;height:32px;border-radius:8px;border:none;background:0 0;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);transition:.15s}
+.hb:hover{background:rgba(255,255,255,.06)}
+
+/* === Scene === */
+.scene{flex:1;overflow:hidden;position:relative;background:#0c0e14}
+#roomSvg{position:absolute;left:0;top:0;width:100%;height:100%}
+
+/* Characters */
+.char{position:absolute;z-index:15;pointer-events:none;transition:left 1.8s cubic-bezier(.4,0,.2,1),top 1.8s cubic-bezier(.4,0,.2,1)}
+.char svg{pointer-events:auto;cursor:pointer;transition:transform .2s;filter:drop-shadow(0 6px 16px rgba(0,0,0,.5))}
+.char svg:hover{transform:scale(1.1)}
+.char svg:active{transform:scale(.95)}
+
+/* Idle breathing */
+.char.idle .cb{animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+/* Wandering */
+.char.wander{animation:wander 8s ease-in-out infinite alternate}
+@keyframes wander{0%{transform:translate(0,0)}25%{transform:translate(20px,-10px)}50%{transform:translate(-15px,8px)}75%{transform:translate(18px,4px)}100%{transform:translate(-10px,-12px)}}
+.char.wander .leg-l{animation:legW .6s ease-in-out infinite}
+.char.wander .leg-r{animation:legW .6s ease-in-out infinite .3s}
+@keyframes legW{0%,100%{transform:rotate(0)}50%{transform:rotate(12deg)}}
+/* Working */
+.char.work .cb{animation:workB 1s ease-in-out infinite}
+@keyframes workB{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-1px) rotate(-2deg)}75%{transform:translateY(-1px) rotate(2deg)}}
+.char.work .arm-l{animation:armT .4s ease-in-out infinite}
+.char.work .arm-r{animation:armT .4s ease-in-out infinite .2s}
+@keyframes armT{0%,100%{transform:rotate(0)}50%{transform:rotate(-10deg) translateY(-2px)}}
+.char.work{animation:none!important}
+/* Error */
+.char.err .cb{animation:shake .25s ease-in-out infinite}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.char.err{animation:none!important}
+
+/* Labels */
+.clbl{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:rgba(255,255,255,.65);white-space:nowrap;background:rgba(0,0,0,.55);padding:3px 10px;border-radius:8px;backdrop-filter:blur(4px);display:flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.06)}
+.led{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.led.idle{background:#10A37F;box-shadow:0 0 6px rgba(16,163,127,.5)}
+.led.work{background:#3482FF;box-shadow:0 0 6px rgba(52,130,255,.6);animation:pLed 1s ease infinite}
+.led.err{background:#EF4444;box-shadow:0 0 6px rgba(239,68,68,.6);animation:pLed .5s ease infinite}
+@keyframes pLed{0%,100%{box-shadow:0 0 4px currentColor}50%{box-shadow:0 0 12px 3px currentColor}}
+
+/* Error badge + smoke */
+.ebdg{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;background:#EF4444;color:#fff;font-size:14px;font-weight:700;display:none;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(239,68,68,.6);animation:ebounce .5s ease-in-out infinite alternate;z-index:20}
+.char.err .ebdg{display:flex}
+@keyframes ebounce{from{transform:translateX(-50%) translateY(0)}to{transform:translateX(-50%) translateY(-6px)}}
+.smk{position:absolute;top:-12px;left:50%;transform:translateX(-50%);pointer-events:none;display:none}
+.char.err .smk{display:block}
+.sp{position:absolute;width:10px;height:10px;border-radius:50%;background:rgba(180,180,180,.4);filter:blur(2px)}
+.sp:nth-child(1){animation:sUp 1.2s ease-out infinite 0s;left:-6px}
+.sp:nth-child(2){animation:sUp 1.2s ease-out infinite .4s;left:4px}
+.sp:nth-child(3){animation:sUp 1.2s ease-out infinite .8s;left:0}
+@keyframes sUp{0%{transform:translateY(0) scale(.4);opacity:.7}100%{transform:translateY(-35px) scale(1.8);opacity:0}}
+
+/* Task pill */
+.tpill{position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:rgba(20,24,40,.85);backdrop-filter:blur(8px);border:1px solid rgba(52,130,255,.25);border-radius:10px;padding:3px 10px;font-size:9px;color:rgba(200,210,255,.8);white-space:nowrap;display:none;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:18;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.char.work .tpill.vis{display:block;animation:pIn .3s ease-out}
+@keyframes pIn{from{opacity:0;transform:translateX(-50%) translateY(4px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Comm lines (drawn via JS in SVG) */
+.cpath{fill:none;stroke:rgba(52,130,255,.1);stroke-width:2;stroke-linecap:round;transition:stroke .3s}
+.cpath.on{stroke:rgba(100,160,255,.6);stroke-width:2.5;stroke-dasharray:10 5;animation:dashM .7s linear infinite;filter:drop-shadow(0 0 4px rgba(80,140,255,.4))}
+@keyframes dashM{to{stroke-dashoffset:-15}}
+.cglow{fill:none;stroke:rgba(52,130,255,.04);stroke-width:12;stroke-linecap:round}
+.cglow.on{stroke:rgba(52,130,255,.08);animation:gPulse 2s ease-in-out infinite}
+@keyframes gPulse{0%,100%{stroke-width:12;opacity:.5}50%{stroke-width:18;opacity:1}}
+.cdot{fill:#6BA3FF;opacity:0;filter:drop-shadow(0 0 4px rgba(100,160,255,.8))}
+.cdot.on{opacity:1}
+
+/* === Detail Panel === */
+.dp{position:absolute;right:0;top:0;bottom:0;width:300px;background:rgba(18,20,28,.96);backdrop-filter:blur(16px);border-left:1px solid rgba(255,255,255,.06);box-shadow:-4px 0 24px rgba(0,0,0,.3);z-index:30;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.dp.open{transform:translateX(0)}
+.dp-h{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:8px}
+.dp-x{width:26px;height:26px;border-radius:8px;border:none;background:0 0;cursor:pointer;font-size:14px;color:rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center}
+.dp-x:hover{background:rgba(255,255,255,.06)}
+.dp-n{font-size:14px;font-weight:600;flex:1;color:#e0e4ef}
+.dp-b{flex:1;overflow-y:auto;padding:14px 18px}
+.dp-s{margin-bottom:16px}
+.dp-l{font-size:9px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600}
+.dp-c{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;margin-bottom:5px;cursor:pointer;transition:.15s}
+.dp-c:hover{background:rgba(52,130,255,.06);border-color:rgba(52,130,255,.15)}
+.dp-ct{font-size:12px;font-weight:500;color:rgba(255,255,255,.7)}
+.dp-cd{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px}
+.dp-ca{padding:10px 18px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:6px}
+.dp-ci{flex:1;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;font-size:12px;outline:0;font-family:inherit;background:rgba(255,255,255,.03);color:#e0e4ef;transition:.15s}
+.dp-ci:focus{border-color:rgba(52,130,255,.4)}
+.dp-cs{width:34px;height:34px;border-radius:50%;border:none;background:#3482FF;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:.15s;flex-shrink:0}
+.dp-cs:hover{background:#2B6FE0}
+
+/* === Test Console (draggable) === */
+.tc{position:absolute;bottom:14px;left:14px;width:290px;background:rgba(18,20,30,.92);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:40;overflow:hidden;user-select:none}
+.tc.col{width:40px;height:40px;border-radius:50%;cursor:pointer}
+.tc.col .tcb{display:none}
+.tc.col .tct,.tc.col .tcm{display:none}
+.tch{display:flex;align-items:center;gap:7px;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.06);cursor:grab}
+.tch:active{cursor:grabbing}
+.tc.col .tch{border:none;padding:9px;justify-content:center}
+.tci{font-size:14px;flex-shrink:0}
+.tct{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);flex:1}
+.tcm{font-size:12px;color:rgba(255,255,255,.25);cursor:pointer;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;border:none;background:0 0}
+.tcm:hover{background:rgba(255,255,255,.06)}
+.tcb{padding:8px 12px;max-height:360px;overflow-y:auto}
+.tg{margin-bottom:8px}
+.tgl{font-size:9px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.tr{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:3px}
+.tb{padding:4px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);font-size:9px;color:rgba(255,255,255,.45);cursor:pointer;transition:.15s;font-family:inherit;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.tb:hover{background:rgba(52,130,255,.1);border-color:rgba(52,130,255,.25);color:#6BA3FF}
+.tb .e{font-size:10px}
+
+/* Activity feed */
+.af{position:absolute;bottom:14px;right:14px;max-width:240px;z-index:35;display:flex;flex-direction:column-reverse;gap:4px;pointer-events:none}
+.ai{background:rgba(18,20,30,.85);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:5px 9px;font-size:9px;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:4px;box-shadow:0 2px 8px rgba(0,0,0,.3);animation:aIn .3s ease-out;pointer-events:auto}
+@keyframes aIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.at{color:rgba(255,255,255,.15);margin-left:auto;font-size:8px;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sidebar">
+<div class="sd"></div>
+<div class="st"><button class="sb">☰</button><button class="sb">✎</button></div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div class="ni"><span class="ic">💬</span>新对话</div>
+<div class="ni"><span class="ic">🔍</span>搜索</div>
+<div class="ni"><span class="ic">⏰</span>定时任务</div>
+<div class="ni"><span class="ic">🧩</span>技能</div>
+<div class="ni"><span class="ic">🔌</span>MCP</div>
+<div class="ni ac"><span class="ic">🏠</span>协作大厅<span class="nb">3</span></div>
+</div>
+<div class="ss"><div class="sg">今天</div><div class="si">分析代码性能</div><div class="si">生成项目文档</div><div class="sg">昨天</div><div class="si">部署 Docker</div></div>
+<div class="sbot"><div class="ni"><span class="ic">⚙️</span>设置</div></div>
+</div>
+
+<div class="main">
+<div class="mh">
+<div class="mh-l"><span class="mh-t">协作大厅</span><span class="mh-tag">3 台设备在线</span></div>
+<div class="mh-r"><button class="hb" onclick="togComm()" title="通讯">📡</button><button class="hb">⋯</button></div>
+</div>
+
+<div class="scene" id="scene" onclick="onScene(event)">
+<svg id="roomSvg" preserveAspectRatio="xMidYMid meet"></svg>
+
+<!-- Characters (absolutely positioned, no 3D transform) -->
+<div class="char idle wander" id="c-phone"><div class="ebdg">!</div><div class="smk"><div class="sp"></div><div class="sp"></div><div class="sp"></div></div><div class="tpill" id="tp-phone"></div>
+<svg width="64" height="80" viewBox="0 0 64 80"><defs><radialGradient id="pH" cx="38%" cy="32%" r="58%"><stop offset="0%" stop-color="#b4d4ff"/><stop offset="50%" stop-color="#6ba3ff"/><stop offset="100%" stop-color="#3b7cf5"/></radialGradient><radialGradient id="pS" cx="32%" cy="22%" r="28%"><stop offset="0%" stop-color="rgba(255,255,255,.7)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><g class="cb"><ellipse cx="32" cy="56" rx="15" ry="13" fill="url(#pH)"/><circle cx="32" cy="28" r="21" fill="url(#pH)"/><circle cx="32" cy="28" r="21" fill="url(#pS)"/><ellipse cx="24" cy="28" rx="3" ry="3.5" fill="#1a1850"/><ellipse cx="24" cy="26.5" rx="1.3" ry="1.5" fill="rgba(255,255,255,.9)"/><ellipse cx="40" cy="28" rx="3" ry="3.5" fill="#1a1850"/><ellipse cx="40" cy="26.5" rx="1.3" ry="1.5" fill="rgba(255,255,255,.9)"/><ellipse cx="18" cy="33" rx="3.5" ry="2" fill="rgba(255,160,180,.35)"/><ellipse cx="46" cy="33" rx="3.5" ry="2" fill="rgba(255,160,180,.35)"/><path d="M29 35 Q32 38.5 35 35" fill="none" stroke="#1a1850" stroke-width="1.2" stroke-linecap="round"/><line x1="32" y1="7" x2="32" y2="2" stroke="#6ba3ff" stroke-width="1.5"/><circle cx="32" cy="1.5" r="2.5" fill="#b388ff" opacity=".8"><animate attributeName="opacity" values=".4;1;.4" dur="2s" repeatCount="indefinite"/></circle><ellipse class="arm-l" cx="16" cy="52" rx="4.5" ry="7" fill="#5a94e8" transform-origin="16 48"/><ellipse class="arm-r" cx="48" cy="52" rx="4.5" ry="7" fill="#5a94e8" transform-origin="48 48"/><ellipse class="leg-l" cx="25" cy="69" rx="4.5" ry="5.5" fill="#5a94e8" transform-origin="25 66"/><ellipse class="leg-r" cx="39" cy="69" rx="4.5" ry="5.5" fill="#5a94e8" transform-origin="39 66"/><rect x="43" y="50" width="10" height="14" rx="2" fill="rgba(255,255,255,.9)" stroke="#3b7cf5" stroke-width=".6"/><rect x="45" y="52.5" width="6" height="7" rx="1" fill="#dbeafe"/></g></svg>
+<div class="clbl"><span class="led idle" id="ld-phone"></span>小泡·手机</div></div>
+
+<div class="char idle wander" id="c-pad"><div class="ebdg">!</div><div class="smk"><div class="sp"></div><div class="sp"></div><div class="sp"></div></div><div class="tpill" id="tp-pad"></div>
+<svg width="68" height="86" viewBox="0 0 68 86"><defs><radialGradient id="cH" cx="38%" cy="32%" r="58%"><stop offset="0%" stop-color="#fdd0e8"/><stop offset="50%" stop-color="#f5a0cc"/><stop offset="100%" stop-color="#e560a0"/></radialGradient><radialGradient id="cS" cx="30%" cy="22%" r="28%"><stop offset="0%" stop-color="rgba(255,255,255,.65)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><g class="cb"><path d="M52 58 Q66 48 62 35 Q59 27 55 31" fill="none" stroke="#f08cc0" stroke-width="3.5" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" values="-5 52 58;5 52 58;-5 52 58" dur="2s" repeatCount="indefinite"/></path><ellipse cx="34" cy="58" rx="17" ry="15" fill="url(#cH)"/><circle cx="34" cy="30" r="23" fill="url(#cH)"/><circle cx="34" cy="30" r="23" fill="url(#cS)"/><polygon points="12,16 19,1 24,17" fill="#f5a0cc"/><polygon points="15,15 19,5 22,16" fill="rgba(255,255,255,.3)"/><polygon points="44,17 49,1 56,16" fill="#f5a0cc"/><polygon points="46,16 49,5 53,15" fill="rgba(255,255,255,.3)"/><ellipse cx="26" cy="30" rx="3.2" ry="3.8" fill="#4a1550"/><ellipse cx="26" cy="28.5" rx="1.4" ry="1.6" fill="rgba(255,255,255,.9)"/><ellipse cx="42" cy="30" rx="3.2" ry="3.8" fill="#4a1550"/><ellipse cx="42" cy="28.5" rx="1.4" ry="1.6" fill="rgba(255,255,255,.9)"/><ellipse cx="34" cy="35" rx="2" ry="1.5" fill="#b5205a"/><path d="M31 37 Q34 40 37 37" fill="none" stroke="#8a1848" stroke-width=".8"/><line x1="7" y1="32" x2="20" y2="33.5" stroke="rgba(180,40,90,.2)" stroke-width=".7"/><line x1="7" y1="36" x2="19" y2="37" stroke="rgba(180,40,90,.2)" stroke-width=".7"/><line x1="48" y1="33.5" x2="61" y2="32" stroke="rgba(180,40,90,.2)" stroke-width=".7"/><line x1="49" y1="37" x2="61" y2="36" stroke="rgba(180,40,90,.2)" stroke-width=".7"/><ellipse cx="18" cy="35" rx="4" ry="2.2" fill="rgba(255,150,170,.3)"/><ellipse cx="50" cy="35" rx="4" ry="2.2" fill="rgba(255,150,170,.3)"/><ellipse class="arm-l" cx="16" cy="55" rx="5" ry="7.5" fill="#e070a8" transform-origin="16 50"/><ellipse class="arm-r" cx="52" cy="55" rx="5" ry="7.5" fill="#e070a8" transform-origin="52 50"/><ellipse class="leg-l" cx="26" cy="73" rx="5" ry="6" fill="#e070a8" transform-origin="26 70"/><ellipse class="leg-r" cx="42" cy="73" rx="5" ry="6" fill="#e070a8" transform-origin="42 70"/></g></svg>
+<div class="clbl"><span class="led idle" id="ld-pad"></span>小云·PAD</div></div>
+
+<div class="char idle wander" id="c-pc"><div class="ebdg">!</div><div class="smk"><div class="sp"></div><div class="sp"></div><div class="sp"></div></div><div class="tpill" id="tp-pc"></div>
+<svg width="72" height="90" viewBox="0 0 72 90"><defs><radialGradient id="bH" cx="38%" cy="32%" r="58%"><stop offset="0%" stop-color="#a8f0d0"/><stop offset="50%" stop-color="#5ed8a0"/><stop offset="100%" stop-color="#1aab70"/></radialGradient><radialGradient id="bS" cx="28%" cy="20%" r="28%"><stop offset="0%" stop-color="rgba(255,255,255,.55)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><g class="cb"><ellipse cx="36" cy="62" rx="19" ry="16" fill="url(#bH)"/><ellipse cx="36" cy="66" rx="11" ry="10" fill="rgba(255,255,255,.15)"/><circle cx="36" cy="30" r="25" fill="url(#bH)"/><circle cx="36" cy="30" r="25" fill="url(#bS)"/><circle cx="14" cy="12" r="9" fill="#5ed8a0"/><circle cx="14" cy="12" r="4.5" fill="rgba(255,255,255,.2)"/><circle cx="58" cy="12" r="9" fill="#5ed8a0"/><circle cx="58" cy="12" r="4.5" fill="rgba(255,255,255,.2)"/><ellipse cx="28" cy="30" rx="3.8" ry="4.2" fill="#0a4030"/><ellipse cx="28" cy="28" rx="1.6" ry="1.8" fill="rgba(255,255,255,.9)"/><ellipse cx="44" cy="30" rx="3.8" ry="4.2" fill="#0a4030"/><ellipse cx="44" cy="28" rx="1.6" ry="1.8" fill="rgba(255,255,255,.9)"/><ellipse cx="36" cy="37" rx="3.5" ry="2.5" fill="#0a4030"/><path d="M32 41 Q36 44.5 40 41" fill="none" stroke="#0a4030" stroke-width="1.1" stroke-linecap="round"/><ellipse cx="20" cy="37" rx="4" ry="2.5" fill="rgba(252,160,160,.3)"/><ellipse cx="52" cy="37" rx="4" ry="2.5" fill="rgba(252,160,160,.3)"/><ellipse class="arm-l" cx="15" cy="58" rx="6" ry="8.5" fill="#38c488" transform-origin="15 54"/><ellipse class="arm-r" cx="57" cy="58" rx="6" ry="8.5" fill="#38c488" transform-origin="57 54"/><ellipse class="leg-l" cx="28" cy="78" rx="5.5" ry="6.5" fill="#38c488" transform-origin="28 74"/><ellipse class="leg-r" cx="44" cy="78" rx="5.5" ry="6.5" fill="#38c488" transform-origin="44 74"/></g></svg>
+<div class="clbl"><span class="led idle" id="ld-pc"></span>小岩·PC</div></div>
+
+<div class="af" id="af"></div>
+
+<div class="tc" id="tc">
+<div class="tch" id="tcH"><span class="tci">🧪</span><span class="tct">测试控制台</span><button class="tcm" onclick="togTC(event)">−</button></div>
+<div class="tcb">
+<div class="tg"><div class="tgl">状态</div>
+<div class="tr"><button class="tb" onclick="doS('phone','work')"><span class="e">📱</span>工作</button><button class="tb" onclick="doS('pad','work')"><span class="e">📋</span>工作</button><button class="tb" onclick="doS('pc','work')"><span class="e">💻</span>工作</button></div>
+<div class="tr"><button class="tb" onclick="doS('phone','err')"><span class="e">📱</span>冒烟</button><button class="tb" onclick="doS('pad','err')"><span class="e">📋</span>冒烟</button><button class="tb" onclick="doS('pc','err')"><span class="e">💻</span>冒烟</button></div>
+<div class="tr"><button class="tb" onclick="doS('phone','idle')"><span class="e">📱</span>空闲</button><button class="tb" onclick="doS('pad','idle')"><span class="e">📋</span>空闲</button><button class="tb" onclick="doS('pc','idle')"><span class="e">💻</span>空闲</button></div>
+</div>
+<div class="tg"><div class="tgl">任务</div>
+<div class="tr"><button class="tb" onclick="doT('phone','搜索花照片')"><span class="e">📷</span>找照片</button><button class="tb" onclick="doT('pad','绘制UI稿')"><span class="e">🎨</span>画设计</button><button class="tb" onclick="doT('pc','编译项目')"><span class="e">🔧</span>编译</button></div></div>
+<div class="tg"><div class="tgl">通讯</div>
+<div class="tr"><button class="tb" onclick="doC('phone','pad')"><span class="e">↔</span>手机⇄PAD</button><button class="tb" onclick="doC('pad','pc')"><span class="e">↔</span>PAD⇄PC</button><button class="tb" onclick="doC('phone','pc')"><span class="e">↔</span>手机⇄PC</button></div></div>
+<div class="tg"><div class="tgl">场景</div>
+<div class="tr"><button class="tb" onclick="runS('photo')"><span class="e">🎬</span>跨设备找照片</button><button class="tb" onclick="runS('collab')"><span class="e">🎬</span>三端协作</button><button class="tb" onclick="resetAll()"><span class="e">🔄</span>重置</button></div></div>
+</div></div>
+
+</div>
+
+<div class="dp" id="dp">
+<div class="dp-h"><button class="dp-x" onclick="closeD()">✕</button><span class="dp-n" id="dpN"></span></div>
+<div class="dp-b" id="dpB"></div>
+<div class="dp-ca"><input class="dp-ci" id="dpI" placeholder="发送指令..." onkeydown="if(event.key==='Enter')sndC()"><button class="dp-cs" onclick="sndC()">↑</button></div>
+</div>
+</div>
+</div>
+
+<script>
+/* === Isometric helpers === */
+const ISO={ox:0,oy:0,ux:20,uy:10,vx:-20,vy:10};
+function isoP(u,v,z){return{x:ISO.ox+u*ISO.ux+v*ISO.vx,y:ISO.oy+u*ISO.uy+v*ISO.vy-z*20}}
+function pts(arr){return arr.map(p=>p.x+','+p.y).join(' ')}
+function isoRect(u,v,w,d,z,h){
+  const t=[isoP(u,v,z+h),isoP(u+w,v,z+h),isoP(u+w,v+d,z+h),isoP(u,v+d,z+h)];
+  const f=[isoP(u,v+d,z+h),isoP(u+w,v+d,z+h),isoP(u+w,v+d,z),isoP(u,v+d,z)];
+  const r=[isoP(u+w,v,z+h),isoP(u+w,v+d,z+h),isoP(u+w,v+d,z),isoP(u+w,v,z)];
+  return{top:t,front:f,right:r};
+}
+
+/* === Build Room SVG === */
+function buildRoom(){
+  const scene=document.getElementById('scene');
+  const W=scene.clientWidth,H=scene.clientHeight;
+  ISO.ox=W*.48;ISO.oy=H*.26;
+  const RW=16,RD=12,RH=6;
+  const svg=document.getElementById('roomSvg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.setAttribute('width',W);svg.setAttribute('height',H);
+
+  let s='<defs>';
+  s+=`<linearGradient id="gFloor" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#181c2e"/><stop offset="100%" stop-color="#141828"/></linearGradient>`;
+  s+=`<linearGradient id="gWallL" x1="100%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="rgba(25,30,50,.65)"/><stop offset="100%" stop-color="rgba(18,22,38,.5)"/></linearGradient>`;
+  s+=`<linearGradient id="gWallR" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="rgba(30,36,58,.6)"/><stop offset="100%" stop-color="rgba(20,26,42,.45)"/></linearGradient>`;
+  s+=`<linearGradient id="gDesk" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2a3050"/><stop offset="100%" stop-color="#1e2440"/></linearGradient>`;
+  s+=`<linearGradient id="gDeskF" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#222842"/><stop offset="100%" stop-color="#181c30"/></linearGradient>`;
+  s+=`<filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  s+=`<filter id="glow2"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  s+=`<linearGradient id="commG" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3482FF" stop-opacity=".7"/><stop offset="50%" stop-color="#818CF8" stop-opacity=".9"/><stop offset="100%" stop-color="#3482FF" stop-opacity=".7"/></linearGradient>`;
+  s+='</defs>';
+
+  // Ambient glow on the floor
+  const fc=isoP(RW/2,RD/2,0);
+  s+=`<ellipse cx="${fc.x}" cy="${fc.y}" rx="250" ry="140" fill="radial-gradient(rgba(52,130,255,.03),transparent)" opacity=".5"/>`;
+
+  // Floor
+  const floor=[isoP(0,0,0),isoP(RW,0,0),isoP(RW,RD,0),isoP(0,RD,0)];
+  s+=`<polygon points="${pts(floor)}" fill="url(#gFloor)" stroke="rgba(80,120,200,.15)" stroke-width="1.5"/>`;
+
+  // Floor grid
+  for(let i=1;i<RW;i++){const a=isoP(i,0,0),b=isoP(i,RD,0);s+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="rgba(80,120,200,.06)" stroke-width=".5"/>`;}
+  for(let j=1;j<RD;j++){const a=isoP(0,j,0),b=isoP(RW,j,0);s+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="rgba(80,120,200,.06)" stroke-width=".5"/>`;}
+
+  // Back wall (v=0 edge)
+  const wl=[isoP(0,0,0),isoP(RW,0,0),isoP(RW,0,RH),isoP(0,0,RH)];
+  s+=`<polygon points="${pts(wl)}" fill="url(#gWallR)" stroke="none"/>`;
+  // Left wall (u=0 edge)
+  const wr=[isoP(0,0,0),isoP(0,RD,0),isoP(0,RD,RH),isoP(0,0,RH)];
+  s+=`<polygon points="${pts(wr)}" fill="url(#gWallL)" stroke="none"/>`;
+
+  // Wall edge glow lines
+  const we=[
+    [isoP(0,0,0),isoP(RW,0,0)],[isoP(0,0,0),isoP(0,RD,0)],
+    [isoP(0,0,RH),isoP(RW,0,RH)],[isoP(0,0,RH),isoP(0,RD,RH)],
+    [isoP(0,0,0),isoP(0,0,RH)],[isoP(RW,0,0),isoP(RW,0,RH)],[isoP(0,RD,0),isoP(0,RD,RH)]
+  ];
+  we.forEach(([a,b])=>{s+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="rgba(100,160,255,.25)" stroke-width="1.2" filter="url(#glow)"/>`;});
+
+  // Window on back wall
+  const win1=[isoP(4,0,2),isoP(7,0,2),isoP(7,0,5),isoP(4,0,5)];
+  s+=`<polygon points="${pts(win1)}" fill="rgba(100,160,255,.06)" stroke="rgba(100,160,255,.2)" stroke-width=".8"/>`;
+  const win2=[isoP(10,0,2),isoP(13,0,2),isoP(13,0,5),isoP(10,0,5)];
+  s+=`<polygon points="${pts(win2)}" fill="rgba(100,160,255,.06)" stroke="rgba(100,160,255,.2)" stroke-width=".8"/>`;
+
+  // === Desks ===
+  function drawDesk(u,v,label,glowColor){
+    const d=isoRect(u,v,3.5,2,0,1.5);
+    s+=`<polygon points="${pts(d.top)}" fill="url(#gDesk)" stroke="rgba(100,140,200,.1)" stroke-width=".5"/>`;
+    s+=`<polygon points="${pts(d.front)}" fill="url(#gDeskF)" stroke="rgba(100,140,200,.06)" stroke-width=".5"/>`;
+    s+=`<polygon points="${pts(d.right)}" fill="rgba(24,30,52,.8)" stroke="rgba(100,140,200,.06)" stroke-width=".5"/>`;
+    // Monitor
+    const mon=isoRect(u+1,v+.3,1.5,.3,1.5,1.8);
+    s+=`<polygon points="${pts(mon.front)}" fill="#0a0e1a" stroke="rgba(100,160,255,.15)" stroke-width=".5"/>`;
+    // Screen glow
+    const sc=isoP(u+1.75,v+.3,2.4);
+    s+=`<ellipse cx="${sc.x}" cy="${sc.y}" rx="12" ry="8" fill="${glowColor}" opacity=".15" filter="url(#glow2)"/>`;
+    // Chair
+    const ch=isoP(u+1.75,v+3,0);
+    s+=`<ellipse cx="${ch.x}" cy="${ch.y}" rx="14" ry="9" fill="rgba(50,60,100,.6)" stroke="rgba(100,140,200,.1)" stroke-width=".5"/>`;
+    // Desk lamp / small items
+    const lamp=isoP(u+.3,v+.4,1.5);
+    s+=`<circle cx="${lamp.x}" cy="${lamp.y}" r="3" fill="${glowColor}" opacity=".4" filter="url(#glow)"/>`;
+    s+=`<line x1="${lamp.x}" y1="${lamp.y}" x2="${lamp.x}" y2="${lamp.y+8}" stroke="rgba(100,140,200,.15)" stroke-width=".8"/>`;
+  }
+  drawDesk(2,3,'phone','#6ba3ff');
+  drawDesk(7,5,'pad','#f08cc0');
+  drawDesk(11,2,'pc','#5ed8a0');
+
+  // Rug / floor accent
+  const rug=[isoP(6,4,0),isoP(10,4,0),isoP(10,8,0),isoP(6,8,0)];
+  s+=`<polygon points="${pts(rug)}" fill="rgba(52,80,140,.08)" stroke="rgba(80,120,200,.08)" stroke-width=".5" rx="4"/>`;
+
+  // Bookshelf on left wall
+  const bk=isoRect(0,1,0,2,0,4);
+  s+=`<polygon points="${pts(bk.right)}" fill="rgba(40,50,80,.4)" stroke="rgba(100,140,200,.08)" stroke-width=".5"/>`;
+  for(let z=1;z<4;z++){const a=isoP(0,1,z),b=isoP(0,3,z);s+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="rgba(100,140,200,.06)" stroke-width=".5"/>`;}
+
+  // Communication paths (will be updated by JS)
+  s+=`<path id="cg-phone-pad" class="cglow"/><path id="cp-phone-pad" class="cpath"/>`;
+  s+=`<circle id="cd-phone-pad" class="cdot" r="4"/>`;
+  s+=`<path id="cg-pad-pc" class="cglow"/><path id="cp-pad-pc" class="cpath"/>`;
+  s+=`<circle id="cd-pad-pc" class="cdot" r="4"/>`;
+  s+=`<path id="cg-phone-pc" class="cglow"/><path id="cp-phone-pc" class="cpath"/>`;
+  s+=`<circle id="cd-phone-pc" class="cdot" r="4"/>`;
+
+  svg.innerHTML=s;
+  positionChars();
+  updComm();
+}
+
+/* === Character positions === */
+const cHome={phone:{u:3.5,v:5},pad:{u:8.5,v:7},pc:{u:12.5,v:4}};
+const cDesk={phone:{u:3.5,v:5},pad:{u:8.5,v:7},pc:{u:12.5,v:4}};
+function posChar(id,u,v){
+  const p=isoP(u,v,0);
+  const el=document.getElementById('c-'+id);
+  el.style.left=(p.x-32)+'px';el.style.top=(p.y-82)+'px';
+}
+function positionChars(){Object.keys(cHome).forEach(id=>posChar(id,cHome[id].u,cHome[id].v));}
+
+/* === State === */
+const A={phone:{n:'小泡',d:'手机',ic:'📱',st:'idle',task:null,tasks:[]},pad:{n:'小云',d:'PAD',ic:'📋',st:'idle',task:null,tasks:[]},pc:{n:'小岩',d:'PC',ic:'💻',st:'idle',task:null,tasks:[]}};
+let sel=null;const comms=new Set();
+
+/* === Status === */
+function setSt(id,st){
+  A[id].st=st;
+  const el=document.getElementById('c-'+id);
+  el.className='char '+st+(st==='idle'?' wander':'');
+  document.getElementById('ld-'+id).className='led '+st;
+  if(st==='work')posChar(id,cDesk[id].u,cDesk[id].v);
+  if(sel===id)updDP();
+}
+function doS(id,st){
+  if(st==='idle'){A[id].task=null;const tp=document.getElementById('tp-'+id);tp.classList.remove('vis');}
+  setSt(id,st);
+  const l={idle:'空闲',work:'工作中',err:'出错'};
+  addL((st==='err'?'❌':'⚙️')+' '+A[id].n+' → '+l[st]);
+}
+
+/* === Tasks === */
+function doT(id,name){
+  A[id].task=name;A[id].tasks.push({name,st:'run'});
+  const tp=document.getElementById('tp-'+id);tp.textContent=name;tp.classList.add('vis');
+  setSt(id,'work');addL(A[id].ic+' '+A[id].n+' 开始: '+name);
+}
+function compT(id){
+  if(A[id].task){const t=A[id].tasks.find(t=>t.name===A[id].task&&t.st==='run');if(t)t.st='done';addL('✅ '+A[id].n+' 完成: '+A[id].task);A[id].task=null;document.getElementById('tp-'+id).classList.remove('vis');}
+  setSt(id,'idle');
+}
+
+/* === Communication === */
+function updComm(){
+  const cpos={phone:isoP(cDesk.phone.u,cDesk.phone.v,1.5),pad:isoP(cDesk.pad.u,cDesk.pad.v,1.5),pc:isoP(cDesk.pc.u,cDesk.pc.v,1.5)};
+  [['phone','pad'],['pad','pc'],['phone','pc']].forEach(([a,b])=>{
+    const k=[a,b].sort().join('-'),pa=cpos[a],pb=cpos[b];
+    const mx=(pa.x+pb.x)/2,my=(pa.y+pb.y)/2-35;
+    const d=`M${pa.x},${pa.y} Q${mx},${my} ${pb.x},${pb.y}`;
+    const cp=document.getElementById('cp-'+k),cg=document.getElementById('cg-'+k),cd=document.getElementById('cd-'+k);
+    if(!cp)return;
+    cp.setAttribute('d',d);cg.setAttribute('d',d);
+    if(comms.has(k)){cp.classList.add('on');cg.classList.add('on');cd.classList.add('on');animDot(cd,pa,pb,mx,my);}
+    else{cp.classList.remove('on');cg.classList.remove('on');cd.classList.remove('on');}
+  });
+}
+function animDot(dot,pa,pb,mx,my){
+  let t=0;if(dot._a)cancelAnimationFrame(dot._a);
+  function step(){t=(t+.007)%1;const u=1-t,x=u*u*pa.x+2*u*t*mx+t*t*pb.x,y=u*u*pa.y+2*u*t*my+t*t*pb.y;dot.setAttribute('cx',x);dot.setAttribute('cy',y);if(dot.classList.contains('on'))dot._a=requestAnimationFrame(step);}
+  dot._a=requestAnimationFrame(step);
+}
+function doC(a,b){const k=[a,b].sort().join('-');if(comms.has(k)){comms.delete(k);addL('📡 '+A[a].n+'⇄'+A[b].n+' 断开');}else{comms.add(k);addL('📡 '+A[a].n+'⇄'+A[b].n+' 通讯中');}updComm();}
+function togComm(){if(comms.size>0)comms.clear();else{['pad-phone','pad-pc','pc-phone'].forEach(k=>comms.add(k));}updComm();}
+
+/* === Scenes === */
+function runS(s){
+  resetAll();
+  if(s==='photo'){
+    setTimeout(()=>addL('🎬 "帮我找昨天拍的花照片"'),0);
+    setTimeout(()=>doT('pc','解析指令'),500);
+    setTimeout(()=>{doC('pc','phone');addL('📡 小岩委托小泡搜索');},1500);
+    setTimeout(()=>{compT('pc');doT('phone','搜索花照片');},2500);
+    setTimeout(()=>addL('📷 小泡找到3张照片'),4500);
+    setTimeout(()=>{addL('📤 小泡→小岩 传输照片');},5500);
+    setTimeout(()=>{compT('phone');doC('pc','phone');addL('🎬 完成');},7000);
+  }
+  if(s==='collab'){
+    setTimeout(()=>addL('🎬 三端协作'),0);
+    setTimeout(()=>{doT('pc','编写API');doT('pad','设计UI');doT('phone','收集反馈');},500);
+    setTimeout(()=>{doC('pc','pad');doC('pad','phone');doC('pc','phone');},1500);
+    setTimeout(()=>{compT('phone');},4000);
+    setTimeout(()=>{compT('pad');},6000);
+    setTimeout(()=>{compT('pc');comms.clear();updComm();addL('🎬 完成');},8500);
+  }
+}
+function resetAll(){
+  Object.keys(A).forEach(id=>{A[id].task=null;A[id].tasks=[];document.getElementById('tp-'+id).classList.remove('vis');setSt(id,'idle');posChar(id,cHome[id].u,cHome[id].v);});
+  comms.clear();updComm();closeD();document.getElementById('af').innerHTML='';addL('🔄 已重置');
+}
+
+/* === Detail Panel === */
+function selA(id,e){e.stopPropagation();sel=id;updDP();document.getElementById('dp').classList.add('open');}
+function closeD(){document.getElementById('dp').classList.remove('open');sel=null;}
+function onScene(e){if(!e.target.closest('.char svg')&&!e.target.closest('.tc')&&!e.target.closest('.dp'))closeD();}
+function updDP(){
+  if(!sel)return;const a=A[sel];
+  document.getElementById('dpN').textContent=a.ic+' '+a.n+' · '+a.d;
+  const sc={idle:'#10A37F',work:'#3482FF',err:'#EF4444'},sl={idle:'空闲',work:'工作中',err:'出错'};
+  let h='<div class="dp-s"><div class="dp-l">状态</div><div class="dp-c"><div style="display:flex;align-items:center;gap:8px"><span class="led '+a.st+'"></span><span style="font-size:12px;font-weight:500;color:'+sc[a.st]+'">'+sl[a.st]+'</span></div>';
+  if(a.task)h+='<div style="margin-top:5px;font-size:10px;color:rgba(255,255,255,.4)">📌 '+a.task+'</div>';
+  h+='</div></div>';
+  const qa={phone:[{i:'📷',l:'搜索照片',c:'搜索最近照片'},{i:'📱',l:'读通知',c:'读取手机通知'}],pad:[{i:'🎨',l:'画草图',c:'绘制UI草图'},{i:'📖',l:'读文档',c:'阅读总结文档'}],pc:[{i:'💻',l:'编译',c:'编译运行项目'},{i:'🔧',l:'部署',c:'部署到生产环境'}]};
+  h+='<div class="dp-s"><div class="dp-l">快捷指令</div>';
+  (qa[sel]||[]).forEach(q=>{h+=`<div class="dp-c" onclick="doT('${sel}','${q.c}')"><div class="dp-ct">${q.i} ${q.l}</div><div class="dp-cd">${q.c}</div></div>`;});
+  h+='</div>';
+  if(a.tasks.length){h+='<div class="dp-s"><div class="dp-l">历史</div>';a.tasks.slice(-5).reverse().forEach(t=>{h+=`<div class="dp-c"><div class="dp-ct">${t.name}</div><div style="font-size:9px;color:${t.st==='run'?'#3482FF':'#10A37F'};margin-top:2px">${t.st==='run'?'● 执行中':'✓ 完成'}</div></div>`;});h+='</div>';}
+  document.getElementById('dpB').innerHTML=h;
+}
+function sndC(){if(!sel)return;const inp=document.getElementById('dpI');const v=inp.value.trim();if(!v)return;doT(sel,v);inp.value='';}
+
+// Click on characters
+document.querySelectorAll('.char svg').forEach(svg=>{
+  svg.addEventListener('click',e=>{e.stopPropagation();const id=svg.closest('.char').id.replace('c-','');selA(id,e);});
+});
+
+/* === Activity Log === */
+function addL(m){const f=document.getElementById('af');const d=new Date(),ts=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');const el=document.createElement('div');el.className='ai';el.innerHTML='<span>'+m+'</span><span class="at">'+ts+'</span>';f.prepend(el);while(f.children.length>5)f.removeChild(f.lastChild);}
+
+/* === Draggable Test Console === */
+(function(){
+  const el=document.getElementById('tc'),hdr=document.getElementById('tcH');let dx=0,dy=0,dragging=false;
+  hdr.addEventListener('mousedown',e=>{if(el.classList.contains('col')||e.target.closest('.tcm'))return;dragging=true;dx=e.clientX-el.offsetLeft;dy=e.clientY-el.offsetTop;document.body.style.cursor='grabbing';e.preventDefault();});
+  document.addEventListener('mousemove',e=>{if(!dragging)return;const sc=document.getElementById('scene'),sr=sc.getBoundingClientRect();let nx=e.clientX-dx,ny=e.clientY-dy;nx=Math.max(0,Math.min(nx,sr.width-el.offsetWidth));ny=Math.max(0,Math.min(ny,sr.height-el.offsetHeight));el.style.left=nx+'px';el.style.top=ny+'px';el.style.bottom='auto';el.style.right='auto';});
+  document.addEventListener('mouseup',()=>{if(dragging){dragging=false;document.body.style.cursor='';}});
+})();
+function togTC(e){e&&e.stopPropagation();document.getElementById('tc').classList.toggle('col');}
+
+/* === Init === */
+window.addEventListener('load',()=>{buildRoom();addL('🏠 协作大厅就绪');});
+window.addEventListener('resize',()=>{buildRoom();});
+</script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440,initial-scale=1">
+<title>MiClaw · 20.xx 文件管理 UI 稿</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F8F9FB;--surface:#FFF;--surfaceHover:#EEF0F5;--surfaceMuted:#F2F3F7;
+  --surfaceInset:#E9EBF0;--text:#1A1D23;--textSec:#636878;--border:#DDE0E8;
+  --borderLight:#E9EBF0;--accent:#0D9488;--accentHover:#0F766E;--accentLight:#2DD4BF;
+  --accentMuted:rgba(13,148,136,.1);
+  --shadow-card:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-elevated:0 4px 12px rgba(0,0,0,.1);
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;
+  --mono:'SF Mono','Fira Code','Menlo',monospace;
+  --red:#EF4444;--blue:#3B82F6;--purple:#8B5CF6;--orange:#F59E0B;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB;color:var(--text)}
+
+.tab-bar{position:fixed;top:0;left:0;right:0;height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:2px;padding:0 20px;z-index:9999;box-shadow:var(--shadow-card)}
+.tab-bar .logo{font-weight:700;font-size:14px;color:var(--accent);margin-right:16px;white-space:nowrap}
+.tab{padding:8px 14px;border-radius:8px;font-size:12.5px;cursor:pointer;color:var(--textSec);transition:.15s;white-space:nowrap;user-select:none}
+.tab:hover{background:var(--surfaceHover);color:var(--text)}
+.tab.active{background:var(--accentMuted);color:var(--accent);font-weight:600}
+
+.canvas{position:fixed;top:52px;left:0;right:0;bottom:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px}
+.canvas-inner{display:none;flex-direction:column;align-items:center;gap:24px;max-width:1200px;width:100%}
+.canvas-inner.active{display:flex}
+.scene-label{font-size:13px;color:var(--textSec);font-weight:600;letter-spacing:.5px;text-transform:uppercase;align-self:flex-start}
+
+/* App frame */
+.app-frame{width:1060px;height:640px;background:var(--surface);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.16);overflow:hidden;display:flex;flex-direction:column}
+.title-bar{height:40px;background:var(--surfaceMuted);border-bottom:1px solid var(--borderLight);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0}
+.title-bar .dots{display:flex;gap:6px}
+.title-bar .dot{width:10px;height:10px;border-radius:50%}
+.title-bar .dot.r{background:#ff5f57}.title-bar .dot.y{background:#febc2e}.title-bar .dot.g{background:#28c840}
+.app-body{flex:1;display:flex;overflow:hidden}
+
+/* Sidebar mini */
+.sidebar-mini{width:56px;background:var(--surfaceMuted);border-right:1px solid var(--borderLight);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px;flex-shrink:0}
+.sb-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;color:var(--textSec)}
+.sb-icon:hover{background:var(--surfaceHover);color:var(--text)}
+.sb-icon.active{background:var(--accentMuted);color:var(--accent)}
+.sb-icon svg{width:18px;height:18px}
+
+/* File page */
+.file-page{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.file-header{padding:16px 24px;border-bottom:1px solid var(--borderLight);display:flex;align-items:center;gap:16px;flex-shrink:0}
+.file-header h2{font-size:18px;font-weight:700;color:var(--text)}
+.file-tabs{display:flex;gap:2px;background:var(--surfaceMuted);border-radius:10px;padding:2px}
+.file-tab{padding:6px 14px;border-radius:8px;font-size:12.5px;color:var(--textSec);cursor:pointer;transition:.15s;font-weight:500}
+.file-tab:hover{color:var(--text)}
+.file-tab.active{background:var(--surface);color:var(--accent);font-weight:600;box-shadow:var(--shadow-card)}
+.file-search{margin-left:auto;position:relative}
+.file-search input{width:220px;height:34px;border-radius:10px;border:1px solid var(--borderLight);background:var(--surfaceMuted);padding:0 12px 0 34px;font-size:12.5px;color:var(--text);outline:none;transition:.2s}
+.file-search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentMuted)}
+.file-search svg{position:absolute;left:10px;top:9px;width:16px;height:16px;color:var(--textSec)}
+.file-toolbar{padding:8px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:1px solid var(--borderLight)}
+.file-toolbar .sort{font-size:12px;color:var(--textSec);cursor:pointer;display:flex;align-items:center;gap:4px}
+.file-toolbar .sort:hover{color:var(--accent)}
+.file-toolbar .view-toggle{display:flex;gap:2px;margin-left:auto;background:var(--surfaceMuted);border-radius:6px;padding:2px}
+.view-btn{width:28px;height:24px;border-radius:4px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textSec);transition:.12s}
+.view-btn:hover{color:var(--text)}
+.view-btn.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+
+/* Grid view */
+.file-grid{flex:1;overflow-y:auto;padding:16px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;align-content:start}
+.file-card{background:var(--surfaceMuted);border-radius:12px;padding:12px;cursor:pointer;border:2px solid transparent;transition:.2s;position:relative}
+.file-card:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-elevated)}
+.file-card.selected{border-color:var(--accent);background:var(--accentMuted)}
+.file-card .check{position:absolute;top:8px;left:8px;width:20px;height:20px;border-radius:6px;border:2px solid var(--borderLight);background:var(--surface);display:none;align-items:center;justify-content:center}
+.file-card:hover .check,.file-card.selected .check{display:flex}
+.file-card.selected .check{background:var(--accent);border-color:var(--accent)}
+.file-card.selected .check svg{display:block}
+.file-thumb{height:100px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden}
+.file-thumb.code{background:linear-gradient(135deg,#e8f5e9,#c8e6c9)}
+.file-thumb.doc{background:linear-gradient(135deg,#e3f2fd,#bbdefb)}
+.file-thumb.img{background:linear-gradient(135deg,#fce4ec,#f8bbd0)}
+.file-thumb.excel{background:linear-gradient(135deg,#e8f5e9,#a5d6a7)}
+.file-thumb.md{background:linear-gradient(135deg,#ede7f6,#d1c4e9)}
+.file-thumb.pdf{background:linear-gradient(135deg,#fff3e0,#ffe0b2)}
+.file-thumb svg{width:32px;height:32px}
+.file-card .fname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.file-card .fmeta{font-size:11px;color:var(--textSec);display:flex;align-items:center;gap:4px}
+.file-card .fmeta .dot{width:3px;height:3px;border-radius:50%;background:var(--textSec)}
+.file-card .fmenu{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:6px;border:none;background:rgba(255,255,255,.8);backdrop-filter:blur(4px);cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--textSec)}
+.file-card:hover .fmenu{display:flex}
+
+/* Preview panel */
+.preview-panel{width:380px;border-left:1px solid var(--borderLight);display:flex;flex-direction:column;flex-shrink:0;background:var(--surface)}
+.preview-header{padding:16px;border-bottom:1px solid var(--borderLight);display:flex;align-items:center;gap:10px}
+.preview-header .pname{flex:1;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preview-header .close-btn{width:28px;height:28px;border-radius:8px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textSec)}
+.preview-header .close-btn:hover{background:var(--surfaceHover);color:var(--text)}
+.preview-content{flex:1;overflow-y:auto;padding:16px}
+.preview-thumb{width:100%;height:200px;border-radius:10px;background:var(--surfaceMuted);display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden}
+.preview-thumb pre{font-family:var(--mono);font-size:10px;color:var(--textSec);line-height:1.6;padding:12px;text-align:left;white-space:pre-wrap;width:100%;height:100%;overflow:hidden}
+.preview-meta{display:flex;flex-direction:column;gap:10px}
+.preview-meta .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px}
+.preview-meta .row .label{color:var(--textSec)}
+.preview-meta .row .value{color:var(--text);font-weight:500}
+.preview-meta .row .value.link{color:var(--accent);cursor:pointer}
+.preview-meta .row .value.link:hover{text-decoration:underline}
+.preview-actions{padding:16px;border-top:1px solid var(--borderLight);display:flex;gap:8px;flex-shrink:0}
+.preview-actions button{flex:1;height:36px;border-radius:10px;border:1px solid var(--borderLight);background:var(--surface);font-size:12.5px;color:var(--text);cursor:pointer;transition:.12s;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:500}
+.preview-actions button:hover{border-color:var(--accent);color:var(--accent)}
+.preview-actions button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.preview-actions button.primary:hover{background:var(--accentHover)}
+
+/* Batch bar */
+.batch-bar{height:48px;background:var(--accent);display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0}
+.batch-bar .count{color:rgba(255,255,255,.9);font-size:13px;font-weight:500}
+.batch-bar button{height:32px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-size:12px;cursor:pointer;transition:.12s;display:flex;align-items:center;gap:5px}
+.batch-bar button:hover{background:rgba(255,255,255,.2)}
+.batch-bar .cancel{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:12px}
+.batch-bar .cancel:hover{color:#fff}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:60px;color:var(--textSec)}
+.empty-state svg{width:64px;height:64px;color:var(--surfaceInset)}
+.empty-state .title{font-size:16px;font-weight:600;color:var(--text)}
+.empty-state .desc{font-size:13px;text-align:center;max-width:300px;line-height:1.6}
+
+.anno-card{max-width:800px;width:100%;padding:20px 24px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow-card);border:1px solid var(--borderLight)}
+.anno-card h3{font-size:14px;font-weight:700;margin-bottom:10px}
+.anno-card ul{padding-left:18px}
+.anno-card li{font-size:12.5px;line-height:1.7;color:var(--textSec)}
+</style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <span class="logo">MiClaw · 文件管理 UI 稿</span>
+  <div class="tab active" onclick="showTab('overview')">20.01 资产总览</div>
+  <div class="tab" onclick="showTab('preview')">20.03 文件预览</div>
+  <div class="tab" onclick="showTab('batch')">20.06 批量操作</div>
+  <div class="tab" onclick="showTab('empty')">空状态</div>
+</div>
+
+<div class="canvas">
+
+<!-- ===== OVERVIEW ===== -->
+<div class="canvas-inner active" id="tab-overview">
+  <span class="scene-label">20.01-20.02 · 文件资产总览 + 文件卡片</span>
+  <div class="app-frame">
+    <div class="title-bar">
+      <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    </div>
+    <div class="app-body">
+      <div class="sidebar-mini">
+        <div class="sb-icon" title="新建任务"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="sb-icon" title="定时任务"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="sb-icon active" title="文件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="sb-icon" title="设备"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+      </div>
+      <div class="file-page">
+        <div class="file-header">
+          <h2>文件</h2>
+          <div class="file-tabs">
+            <div class="file-tab active">全部</div>
+            <div class="file-tab">文档</div>
+            <div class="file-tab">代码</div>
+            <div class="file-tab">媒体</div>
+          </div>
+          <div class="file-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input placeholder="搜索文件名…">
+          </div>
+        </div>
+        <div class="file-toolbar">
+          <span class="sort"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 18V4"/></svg> 按时间</span>
+          <span class="sort"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg> 按类型</span>
+          <div class="view-toggle">
+            <button class="view-btn active" title="网格"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
+            <button class="view-btn" title="列表"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+          </div>
+        </div>
+        <div class="file-grid">
+          <!-- Card 1: HTML -->
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <button class="fmenu">⋯</button>
+            <div class="file-thumb code">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="fname">landing-page.html</div>
+            <div class="fmeta"><span>320 行</span><span class="dot"></span><span>12 KB</span><span class="dot"></span><span>3 分钟前</span></div>
+          </div>
+          <!-- Card 2: XLSX -->
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <button class="fmenu">⋯</button>
+            <div class="file-thumb excel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1b5e20" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+            </div>
+            <div class="fname">sales-report.xlsx</div>
+            <div class="fmeta"><span>8 sheet</span><span class="dot"></span><span>156 KB</span><span class="dot"></span><span>1 小时前</span></div>
+          </div>
+          <!-- Card 3: SVG -->
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <button class="fmenu">⋯</button>
+            <div class="file-thumb img">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div class="fname">chart-visualization.svg</div>
+            <div class="fmeta"><span>SVG</span><span class="dot"></span><span>24 KB</span><span class="dot"></span><span>1 小时前</span></div>
+          </div>
+          <!-- Card 4: MD -->
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <button class="fmenu">⋯</button>
+            <div class="file-thumb md">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#5e35b1" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="fname">meeting-notes.md</div>
+            <div class="fmeta"><span>Markdown</span><span class="dot"></span><span>3 KB</span><span class="dot"></span><span>昨天</span></div>
+          </div>
+          <!-- Card 5: React -->
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <button class="fmenu">⋯</button>
+            <div class="file-thumb code" style="background:linear-gradient(135deg,#e0f7fa,#b2ebf2)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#00838f" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="fname">DataChart.tsx</div>
+            <div class="fmeta"><span>React</span><span class="dot"></span><span>85 行</span><span class="dot"></span><span>昨天</span></div>
+          </div>
+          <!-- Card 6: PDF -->
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <button class="fmenu">⋯</button>
+            <div class="file-thumb pdf">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="fname">project-proposal.pdf</div>
+            <div class="fmeta"><span>PDF</span><span class="dot"></span><span>2.1 MB</span><span class="dot"></span><span>本周</span></div>
+          </div>
+          <!-- Card 7: PNG -->
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <button class="fmenu">⋯</button>
+            <div class="file-thumb img" style="background:linear-gradient(135deg,#e1f5fe,#b3e5fc)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#0277bd" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div class="fname">ui-screenshot.png</div>
+            <div class="fmeta"><span>PNG</span><span class="dot"></span><span>420 KB</span><span class="dot"></span><span>本周</span></div>
+          </div>
+          <!-- Card 8: JSON -->
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <button class="fmenu">⋯</button>
+            <div class="file-thumb code" style="background:linear-gradient(135deg,#fff8e1,#ffecb3)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#f57f17" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="fname">api-config.json</div>
+            <div class="fmeta"><span>JSON</span><span class="dot"></span><span>2 KB</span><span class="dot"></span><span>本周</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PREVIEW ===== -->
+<div class="canvas-inner" id="tab-preview">
+  <span class="scene-label">20.03-20.04 · 文件预览 + 二次编辑（右侧面板）</span>
+  <div class="app-frame">
+    <div class="title-bar">
+      <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    </div>
+    <div class="app-body">
+      <div class="sidebar-mini">
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="sb-icon active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+      </div>
+      <div class="file-page" style="flex:1">
+        <div class="file-header">
+          <h2>文件</h2>
+          <div class="file-tabs">
+            <div class="file-tab">全部</div>
+            <div class="file-tab">文档</div>
+            <div class="file-tab active">代码</div>
+            <div class="file-tab">媒体</div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;overflow:hidden">
+          <div class="file-grid" style="flex:1">
+            <div class="file-card" style="border-color:var(--accent)">
+              <div class="file-thumb code"><svg viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+              <div class="fname">landing-page.html</div>
+              <div class="fmeta"><span>320 行</span><span class="dot"></span><span>12 KB</span></div>
+            </div>
+            <div class="file-card">
+              <div class="file-thumb code" style="background:linear-gradient(135deg,#e0f7fa,#b2ebf2)"><svg viewBox="0 0 24 24" fill="none" stroke="#00838f" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+              <div class="fname">DataChart.tsx</div>
+              <div class="fmeta"><span>85 行</span><span class="dot"></span><span>4 KB</span></div>
+            </div>
+            <div class="file-card">
+              <div class="file-thumb code" style="background:linear-gradient(135deg,#fff8e1,#ffecb3)"><svg viewBox="0 0 24 24" fill="none" stroke="#f57f17" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+              <div class="fname">api-config.json</div>
+              <div class="fmeta"><span>JSON</span><span class="dot"></span><span>2 KB</span></div>
+            </div>
+          </div>
+          <!-- Right preview panel -->
+          <div class="preview-panel">
+            <div class="preview-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <span class="pname">landing-page.html</span>
+              <button class="close-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div class="preview-content">
+              <div class="preview-thumb" style="background:#1e1e2e;align-items:stretch">
+                <pre style="color:#9cdcfe">&lt;!DOCTYPE html&gt;
+&lt;html lang="zh"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;title&gt;Product Landing&lt;/title&gt;
+  &lt;style&gt;
+    :root { --primary: #3B82F6; }
+    body { font-family: Inter; }
+    .hero { background: linear-gradient(…) }
+  &lt;/style&gt;
+&lt;/head&gt;</pre>
+              </div>
+              <div class="preview-meta">
+                <div class="row"><span class="label">类型</span><span class="value">HTML</span></div>
+                <div class="row"><span class="label">大小</span><span class="value">12 KB · 320 行</span></div>
+                <div class="row"><span class="label">创建时间</span><span class="value">2026-03-09 16:27</span></div>
+                <div class="row"><span class="label">来源会话</span><span class="value link">帮我设计产品 Landing Page →</span></div>
+                <div class="row"><span class="label">本地路径</span><span class="value" style="font-family:var(--mono);font-size:11px">~/miclaw-files/landing-page.html</span></div>
+              </div>
+            </div>
+            <div class="preview-actions">
+              <button class="primary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                编辑
+              </button>
+              <button>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                下载
+              </button>
+              <button>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BATCH ===== -->
+<div class="canvas-inner" id="tab-batch">
+  <span class="scene-label">20.06 · 批量操作（底部操作栏）</span>
+  <div class="app-frame">
+    <div class="title-bar">
+      <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    </div>
+    <div class="app-body">
+      <div class="sidebar-mini">
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="sb-icon active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+      </div>
+      <div class="file-page">
+        <div class="file-header">
+          <h2>文件</h2>
+          <div class="file-tabs"><div class="file-tab active">全部</div><div class="file-tab">文档</div><div class="file-tab">代码</div><div class="file-tab">媒体</div></div>
+        </div>
+        <div class="file-grid" style="flex:1">
+          <div class="file-card selected">
+            <div class="check" style="display:flex;background:var(--accent);border-color:var(--accent)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="file-thumb code"><svg viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+            <div class="fname">landing-page.html</div>
+            <div class="fmeta"><span>12 KB</span></div>
+          </div>
+          <div class="file-card selected">
+            <div class="check" style="display:flex;background:var(--accent);border-color:var(--accent)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="file-thumb excel"><svg viewBox="0 0 24 24" fill="none" stroke="#1b5e20" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="fname">sales-report.xlsx</div>
+            <div class="fmeta"><span>156 KB</span></div>
+          </div>
+          <div class="file-card selected">
+            <div class="check" style="display:flex;background:var(--accent);border-color:var(--accent)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="file-thumb img"><svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+            <div class="fname">chart-visualization.svg</div>
+            <div class="fmeta"><span>24 KB</span></div>
+          </div>
+          <div class="file-card">
+            <div class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="display:none"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="file-thumb md"><svg viewBox="0 0 24 24" fill="none" stroke="#5e35b1" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="fname">meeting-notes.md</div>
+            <div class="fmeta"><span>3 KB</span></div>
+          </div>
+        </div>
+        <div class="batch-bar">
+          <span class="count">已选 3 个文件（192 KB）</span>
+          <button><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 批量下载 (.zip)</button>
+          <button><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> 导出到目录</button>
+          <button style="border-color:rgba(239,68,68,.5);color:#fca5a5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</button>
+          <span class="cancel">取消选择</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EMPTY ===== -->
+<div class="canvas-inner" id="tab-empty">
+  <span class="scene-label">20.05 · 搜索无结果 / 空状态</span>
+  <div class="app-frame" style="height:480px">
+    <div class="title-bar">
+      <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    </div>
+    <div class="app-body">
+      <div class="sidebar-mini">
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></div>
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="sb-icon active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+      </div>
+      <div class="file-page">
+        <div class="file-header">
+          <h2>文件</h2>
+          <div class="file-tabs"><div class="file-tab active">全部</div><div class="file-tab">文档</div><div class="file-tab">代码</div><div class="file-tab">媒体</div></div>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <div class="title">还没有任何文件</div>
+            <div class="desc">当你通过 Agent 生成代码、文档、图片等资产时，它们会自动出现在这里。<br><br>试试开始一个新对话吧！</div>
+            <button style="margin-top:8px;padding:10px 24px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer">
+              <span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg> 新建任务</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.canvas-inner').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

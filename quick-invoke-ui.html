@@ -155,11 +155,19 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
 .fp-chat-input .send-sm{width:28px;height:28px;border-radius:8px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .fp-chat-input .send-sm svg{width:12px;height:12px;fill:#fff}
 
-/* --- 17.03g Notification bubble --- */
-.notif-bubble{position:absolute;background:var(--surface);border-radius:12px;box-shadow:var(--shadow-popover);padding:10px 14px;max-width:200px;animation:fadeInUp .2s ease-out}
-.notif-bubble::after{content:'';position:absolute;bottom:-6px;left:20px;width:12px;height:12px;background:var(--surface);transform:rotate(45deg);box-shadow:2px 2px 4px rgba(0,0,0,.05)}
-.notif-bubble .nb-title{font-size:11px;color:var(--accent);font-weight:600;margin-bottom:2px}
-.notif-bubble .nb-text{font-size:12px;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* --- 17.03g System native notification --- */
+.sys-notif{width:365px;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.18),0 1px 4px rgba(0,0,0,.08);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;animation:slideInNotif .35s cubic-bezier(.2,1,.3,1)}
+.sys-notif .notif-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sys-notif .notif-icon.success{background:linear-gradient(135deg,var(--accent),var(--accentHover))}
+.sys-notif .notif-icon.error{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.sys-notif .notif-icon.im{background:linear-gradient(135deg,#3B82F6,#2563EB)}
+.sys-notif .notif-icon svg{width:18px;height:18px;fill:#fff}
+.sys-notif .notif-body{flex:1;min-width:0}
+.sys-notif .notif-app{font-size:11px;color:#999;font-weight:500;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.sys-notif .notif-title{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px}
+.sys-notif .notif-text{font-size:12px;color:#666;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sys-notif .notif-time{font-size:10px;color:#bbb;flex-shrink:0;padding-top:2px}
+@keyframes slideInNotif{from{opacity:0;transform:translateY(-20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 /* --- 17.04 Text selection popup --- */
 .text-popup{width:380px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow-modal);overflow:hidden;animation:scaleIn .2s ease-out}
@@ -269,7 +277,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
   <div class="tab active" onclick="showTab('tray')">17.01 状态栏面板</div>
   <div class="tab" onclick="showTab('ball')">17.03 悬浮球 · 面板</div>
   <div class="tab" onclick="showTab('chat')">17.03f 面板内对话</div>
-  <div class="tab" onclick="showTab('notify')">17.03g 通知气泡</div>
+  <div class="tab" onclick="showTab('notify')">17.03g 系统通知</div>
   <div class="tab" onclick="showTab('textsel')">17.04 文本选中</div>
   <div class="tab" onclick="showTab('screen')">17.06 截图调用</div>
   <div class="tab" onclick="showTab('states')">17.07 球体状态</div>
@@ -461,44 +469,57 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
   </div>
 </div>
 
-<!-- ===================== 17.03g NOTIFICATION ===================== -->
+<!-- ===================== 17.03g SYSTEM NOTIFICATION ===================== -->
 <div class="canvas-inner" id="tab-notify">
-  <span class="scene-label">17.03g · 通知气泡（悬浮球收起时弹出）</span>
-  <div style="display:flex;gap:60px;flex-wrap:wrap;justify-content:center;align-items:flex-end">
-    <!-- Task complete -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative">
-      <div class="comp-label">任务完成通知</div>
-      <div style="position:relative">
-        <div class="notif-bubble" style="position:relative;bottom:auto;left:auto;margin-bottom:12px">
-          <div class="nb-title">✓ 任务完成</div>
-          <div class="nb-text">Landing page 已生成完毕，共 320 行代码</div>
-        </div>
-        <div class="float-ball" style="position:relative"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+  <span class="scene-label">17.03g · 系统原生通知（替代自绘通知气泡，使用 Electron Notification API）</span>
+  <div class="mockup-desktop" style="height:520px">
+    <div class="menu-bar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div style="flex:1;text-align:center;color:rgba(255,255,255,.5);font-size:11px">macOS 通知中心</div>
+      <div style="width:60px;display:flex;align-items:center;justify-content:flex-end;gap:4px;padding-right:8px">
+        <span style="font-size:11px;color:rgba(255,255,255,.7)">16:30</span>
       </div>
     </div>
-    <!-- IM message -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative">
-      <div class="comp-label">IM 新消息通知</div>
-      <div style="position:relative">
-        <div class="notif-bubble" style="position:relative;bottom:auto;left:auto;margin-bottom:12px">
-          <div class="nb-title">💬 飞书 · 张三</div>
-          <div class="nb-text">周报已经准备好了，请查收附件</div>
+    <div class="desktop-area" style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px;display:flex;flex-direction:column;gap:12px;align-items:flex-end;overflow:visible">
+      <!-- Notification 1: Task complete -->
+      <div style="animation-delay:0s" class="sys-notif">
+        <div class="notif-icon success"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div class="notif-body">
+          <div class="notif-app">MiClaw</div>
+          <div class="notif-title">任务完成</div>
+          <div class="notif-text">Landing page 已生成完毕，耗时 2 分 34 秒</div>
         </div>
-        <div class="float-ball" style="position:relative">
-          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          <div class="badge">1</div>
-        </div>
+        <span class="notif-time">刚刚</span>
       </div>
-    </div>
-    <!-- Error -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative">
-      <div class="comp-label">任务出错通知</div>
-      <div style="position:relative">
-        <div class="notif-bubble" style="position:relative;bottom:auto;left:auto;margin-bottom:12px">
-          <div class="nb-title" style="color:var(--red)">✗ 执行失败</div>
-          <div class="nb-text">API 请求超时，请检查网络连接</div>
+      <!-- Notification 2: Error -->
+      <div style="animation-delay:.15s" class="sys-notif">
+        <div class="notif-icon error"><svg viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+        <div class="notif-body">
+          <div class="notif-app">MiClaw</div>
+          <div class="notif-title">执行失败</div>
+          <div class="notif-text">API 请求超时 — 任务"分析销售数据"已中止</div>
         </div>
-        <div class="ball-error" style="position:relative;animation:none"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+        <span class="notif-time">2 分钟前</span>
+      </div>
+      <!-- Notification 3: IM -->
+      <div style="animation-delay:.3s" class="sys-notif">
+        <div class="notif-icon im"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="notif-body">
+          <div class="notif-app">MiClaw · 飞书</div>
+          <div class="notif-title">来自 张三</div>
+          <div class="notif-text">周报已经准备好了，请查收附件</div>
+        </div>
+        <span class="notif-time">5 分钟前</span>
+      </div>
+      <!-- Annotation -->
+      <div style="margin-top:20px;padding:14px 18px;background:rgba(255,255,255,.06);border-radius:12px;border:1px solid rgba(255,255,255,.08);max-width:365px;width:100%">
+        <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:8px">设计说明</div>
+        <div style="font-size:11.5px;line-height:1.6;color:rgba(255,255,255,.5)">
+          • 使用 Electron <code style="background:rgba(255,255,255,.1);padding:1px 4px;border-radius:3px;font-size:10.5px">new Notification({ title, body })</code> 触发系统原生通知<br>
+          • 点击通知 → 打开主窗口并跳转对应会话<br>
+          • 悬浮球不再自绘气泡，仅通过 17.07 状态指示（角标/颜色）反映变更<br>
+          • macOS 支持通知中心聚合；Windows 支持操作中心展示
+        </div>
       </div>
     </div>
   </div>

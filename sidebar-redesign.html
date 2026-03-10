@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440,initial-scale=1">
+<title>MiClaw · 19.xx 侧边栏重构 UI 稿</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F8F9FB;--surface:#FFF;--surfaceHover:#EEF0F5;--surfaceMuted:#F2F3F7;
+  --surfaceInset:#E9EBF0;--text:#1A1D23;--textSec:#636878;--border:#DDE0E8;
+  --borderLight:#E9EBF0;--accent:#0D9488;--accentHover:#0F766E;--accentLight:#2DD4BF;
+  --accentMuted:rgba(13,148,136,.1);
+  --shadow-card:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-elevated:0 4px 12px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.04);
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;
+  --mono:'SF Mono','Fira Code','Menlo',monospace;
+  --red:#EF4444;--blue:#3B82F6;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB;color:var(--text)}
+
+.tab-bar{position:fixed;top:0;left:0;right:0;height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:2px;padding:0 20px;z-index:9999;box-shadow:var(--shadow-card)}
+.tab-bar .logo{font-weight:700;font-size:14px;color:var(--accent);margin-right:16px;white-space:nowrap}
+.tab{padding:8px 14px;border-radius:8px;font-size:12.5px;cursor:pointer;color:var(--textSec);transition:.15s;white-space:nowrap;user-select:none}
+.tab:hover{background:var(--surfaceHover);color:var(--text)}
+.tab.active{background:var(--accentMuted);color:var(--accent);font-weight:600}
+
+.canvas{position:fixed;top:52px;left:0;right:0;bottom:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px}
+.canvas-inner{display:none;flex-direction:column;align-items:center;gap:24px;max-width:1200px;width:100%}
+.canvas-inner.active{display:flex}
+.scene-label{font-size:13px;color:var(--textSec);font-weight:600;letter-spacing:.5px;text-transform:uppercase;align-self:flex-start}
+
+/* App frame */
+.app-frame{width:960px;height:600px;background:var(--surface);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.16);overflow:hidden;display:flex;flex-direction:column}
+.title-bar{height:40px;background:var(--surfaceMuted);border-bottom:1px solid var(--borderLight);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0}
+.title-bar .dots{display:flex;gap:6px}
+.title-bar .dot{width:10px;height:10px;border-radius:50%}
+.title-bar .dot.r{background:#ff5f57}.title-bar .dot.y{background:#febc2e}.title-bar .dot.g{background:#28c840}
+.title-bar .title{flex:1;text-align:center;font-size:12px;color:var(--textSec);font-weight:500}
+
+.app-body{flex:1;display:flex;overflow:hidden}
+
+/* Sidebar */
+.sidebar{width:240px;background:var(--surfaceMuted);border-right:1px solid var(--borderLight);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s}
+.sidebar.collapsed{width:56px}
+.sidebar.collapsed .nav-text,.sidebar.collapsed .sess-text,.sidebar.collapsed .user-name,.sidebar.collapsed .sess-group-label,.sidebar.collapsed .search-btn{display:none}
+.sidebar.collapsed .nav-btn{justify-content:center;padding:8px 0}
+.sidebar.collapsed .nav-btn .nav-icon{margin:0}
+.sidebar.collapsed .user-row{justify-content:center;padding:8px 0}
+.sidebar.collapsed .user-row .settings-icon{display:none}
+
+.sidebar-top{padding:12px;flex-shrink:0}
+.sidebar-top .drag-region{height:28px}
+
+.nav-btn{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;cursor:pointer;transition:.15s;font-size:13px;color:var(--textSec);font-weight:500;border:none;background:none;width:100%;text-align:left}
+.nav-btn:hover{background:var(--surfaceHover);color:var(--text)}
+.nav-btn.active{background:var(--accentMuted);color:var(--accent)}
+.nav-btn.primary{background:var(--accentMuted);color:var(--accent);font-weight:600}
+.nav-btn .nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-btn .nav-icon svg{width:18px;height:18px}
+
+.sidebar-sessions{flex:1;overflow-y:auto;padding:0 8px 8px}
+.sess-group-label{font-size:11px;font-weight:600;color:var(--textSec);padding:12px 8px 6px;text-transform:uppercase;letter-spacing:.4px}
+.sess-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:.12s;font-size:13px;color:var(--text)}
+.sess-item:hover{background:var(--surfaceHover)}
+.sess-item.active{background:var(--accentMuted);color:var(--accent);font-weight:500}
+.sess-item .sess-dot{width:6px;height:6px;border-radius:50%;background:var(--accentLight);flex-shrink:0}
+.sess-item .sess-dot.idle{background:var(--surfaceInset)}
+.sess-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sess-item .sess-time{font-size:10px;color:var(--textSec);flex-shrink:0}
+.sess-item .sess-type{width:16px;height:16px;flex-shrink:0;color:var(--textSec)}
+
+.sidebar-bottom{border-top:1px solid var(--borderLight);padding:8px 12px;flex-shrink:0}
+.user-row{display:flex;align-items:center;gap:10px;padding:6px 4px;cursor:pointer;border-radius:8px;transition:.12s}
+.user-row:hover{background:var(--surfaceHover)}
+.user-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accentHover));display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-avatar svg{width:16px;height:16px;fill:#fff}
+.user-name{flex:1;font-size:13px;font-weight:500;color:var(--text)}
+.settings-icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--textSec);border-radius:6px;cursor:pointer;transition:.12s}
+.settings-icon:hover{background:var(--surfaceHover);color:var(--text)}
+.collapse-btn{display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;border-radius:8px;transition:.12s;color:var(--textSec);font-size:12px;border:none;background:none;width:100%}
+.collapse-btn:hover{background:var(--surfaceHover);color:var(--text)}
+.collapse-btn svg{width:18px;height:18px;flex-shrink:0}
+
+/* Main content area */
+.main-content{flex:1;display:flex;flex-direction:column;background:var(--surface)}
+.main-header{height:52px;border-bottom:1px solid var(--borderLight);display:flex;align-items:center;padding:0 20px;gap:12px}
+.main-header .model-badge{padding:4px 10px;border-radius:8px;background:var(--surfaceMuted);font-size:12px;color:var(--textSec);border:1px solid var(--borderLight)}
+.main-body{flex:1;display:flex;align-items:center;justify-content:center;color:var(--textSec);font-size:14px}
+
+/* Comparison layout */
+.compare{display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.compare-col{display:flex;flex-direction:column;gap:8px;align-items:center}
+.compare-label{font-size:12px;font-weight:600;color:var(--textSec);text-transform:uppercase;letter-spacing:.5px;padding:4px 12px;border-radius:99px;background:var(--surfaceMuted)}
+.compare-label.new{background:var(--accentMuted);color:var(--accent)}
+
+/* Anno card */
+.anno-card{max-width:800px;width:100%;padding:20px 24px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow-card);border:1px solid var(--borderLight)}
+.anno-card h3{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)}
+.anno-card p{font-size:12.5px;line-height:1.7;color:var(--textSec)}
+.anno-card ul{margin:8px 0 0;padding-left:18px}
+.anno-card li{font-size:12.5px;line-height:1.7;color:var(--textSec)}
+.anno-card code{background:var(--surfaceMuted);padding:1px 5px;border-radius:4px;font-size:11px;font-family:var(--mono)}
+
+.badge-new{display:inline-block;padding:2px 6px;border-radius:4px;background:var(--accentMuted);color:var(--accent);font-size:10px;font-weight:600;margin-left:6px}
+.badge-moved{display:inline-block;padding:2px 6px;border-radius:4px;background:rgba(59,130,246,.1);color:var(--blue);font-size:10px;font-weight:600;margin-left:6px}
+</style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <span class="logo">MiClaw · 侧边栏重构 UI 稿</span>
+  <div class="tab active" onclick="showTab('before')">现有侧边栏</div>
+  <div class="tab" onclick="showTab('after')">重构后侧边栏</div>
+  <div class="tab" onclick="showTab('collapsed')">收起状态</div>
+  <div class="tab" onclick="showTab('settings')">迁入设置页</div>
+</div>
+
+<div class="canvas">
+
+<!-- ===== BEFORE ===== -->
+<div class="canvas-inner active" id="tab-before">
+  <span class="scene-label">现有侧边栏（6 个一级入口 + 搜索）</span>
+  <div class="app-frame">
+    <div class="title-bar">
+      <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+      <div class="title">MiClaw</div>
+    </div>
+    <div class="app-body">
+      <div class="sidebar">
+        <div class="sidebar-top">
+          <div class="drag-region"></div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <button class="nav-btn primary">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></span>
+              <span class="nav-text">新建对话</span>
+            </button>
+            <button class="nav-btn">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+              <span class="nav-text">搜索</span>
+            </button>
+            <button class="nav-btn">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+              <span class="nav-text">定时任务</span>
+            </button>
+            <button class="nav-btn">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+              <span class="nav-text">技能</span>
+            </button>
+            <button class="nav-btn">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg></span>
+              <span class="nav-text">MCP 服务</span>
+            </button>
+            <button class="nav-btn">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span>
+              <span class="nav-text">我的设备</span>
+            </button>
+          </div>
+        </div>
+        <div class="sidebar-sessions">
+          <div class="sess-group-label">会话历史</div>
+          <div class="sess-item active"><div class="sess-dot"></div><span class="sess-text">帮我写一个 React 组件</span></div>
+          <div class="sess-item"><div class="sess-dot idle"></div><span class="sess-text">分析这份销售数据</span></div>
+          <div class="sess-item"><div class="sess-dot idle"></div><span class="sess-text">翻译日文论文摘要</span></div>
+        </div>
+        <div class="sidebar-bottom">
+          <button class="nav-btn" style="color:var(--textSec)">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 17H5"/><path d="M19 7h-9"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></span>
+            <span class="nav-text">设置</span>
+          </button>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="main-header">
+          <span style="font-size:14px;font-weight:600">帮我写一个 React 组件</span>
+          <div style="flex:1"></div>
+          <div class="model-badge">Claude Sonnet 4</div>
+        </div>
+        <div class="main-body">
+          <span style="opacity:.5">对话内容区域</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="anno-card">
+    <h3>现有问题</h3>
+    <ul>
+      <li>一级入口过多（6 个 + 搜索），信息层级扁平</li>
+      <li>技能、MCP、我的设备 使用频率低，占据宝贵的侧边栏空间</li>
+      <li>缺少「文件」入口 — 用户生成的资产无集中管理</li>
+      <li>与手机端 Claw 的导航层级不统一（手机：首页/发现/我的 三个 Tab）</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== AFTER ===== -->
+<div class="canvas-inner" id="tab-after">
+  <span class="scene-label">19.01-19.03 · 重构后侧边栏（5 个精简入口）</span>
+  <div class="app-frame">
+    <div class="title-bar">
+      <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+      <div class="title">MiClaw</div>
+    </div>
+    <div class="app-body">
+      <div class="sidebar" id="sidebar-new">
+        <div class="sidebar-top">
+          <div class="drag-region"></div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <!-- 1. New Task -->
+            <button class="nav-btn primary">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></span>
+              <span class="nav-text">新建任务</span>
+            </button>
+            <!-- 2. Scheduled Tasks -->
+            <button class="nav-btn">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+              <span class="nav-text">定时任务</span>
+            </button>
+            <!-- 3. Files (NEW) -->
+            <button class="nav-btn active">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
+              <span class="nav-text">文件<span class="badge-new">NEW</span></span>
+            </button>
+            <!-- 4. Devices -->
+            <button class="nav-btn">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></span>
+              <span class="nav-text">设备</span>
+            </button>
+          </div>
+        </div>
+        <div class="sidebar-sessions">
+          <div class="sess-group-label">今天</div>
+          <div class="sess-item">
+            <div class="sess-dot"></div>
+            <span class="sess-text">帮我设计产品 Landing Page</span>
+            <span class="sess-time">3分钟前</span>
+          </div>
+          <div class="sess-item">
+            <div class="sess-dot idle"></div>
+            <span class="sess-text">分析这份销售数据并生成图表</span>
+            <span class="sess-time">1小时前</span>
+          </div>
+          <div class="sess-group-label">昨天</div>
+          <div class="sess-item">
+            <div class="sess-dot idle"></div>
+            <span class="sess-text">翻译日文论文摘要</span>
+            <span class="sess-time">昨天</span>
+          </div>
+          <div class="sess-item">
+            <div class="sess-dot idle"></div>
+            <span class="sess-text">帮我写一个 React 组件</span>
+            <span class="sess-time">昨天</span>
+          </div>
+          <div class="sess-group-label">本周</div>
+          <div class="sess-item">
+            <div class="sess-dot idle"></div>
+            <span class="sess-text">项目周报自动生成</span>
+            <span class="sess-time">周三</span>
+          </div>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="user-row">
+            <div class="user-avatar"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <span class="user-name">小米用户</span>
+            <span class="settings-icon" title="设置">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 17H5"/><path d="M19 7h-9"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+            </span>
+          </div>
+          <!-- 5. Collapse -->
+          <button class="collapse-btn" onclick="document.getElementById('sidebar-new').classList.toggle('collapsed')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17l-5-5 5-5"/><path d="M18 17l-5-5 5-5"/></svg>
+            <span class="nav-text">收起侧边栏</span>
+          </button>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="main-header">
+          <span style="font-size:14px;font-weight:600;color:var(--accent)">文件</span>
+          <div style="flex:1"></div>
+          <div style="display:flex;gap:6px">
+            <span style="padding:4px 10px;border-radius:8px;background:var(--accentMuted);font-size:12px;color:var(--accent);font-weight:500;cursor:pointer">全部</span>
+            <span style="padding:4px 10px;border-radius:8px;font-size:12px;color:var(--textSec);cursor:pointer">文档</span>
+            <span style="padding:4px 10px;border-radius:8px;font-size:12px;color:var(--textSec);cursor:pointer">代码</span>
+            <span style="padding:4px 10px;border-radius:8px;font-size:12px;color:var(--textSec);cursor:pointer">媒体</span>
+          </div>
+        </div>
+        <div class="main-body" style="align-items:flex-start;padding:20px;overflow-y:auto">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:100%">
+            <div style="background:var(--surfaceMuted);border-radius:12px;padding:16px;cursor:pointer;border:1px solid transparent;transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'">
+              <div style="height:80px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px">landing-page.html</div>
+              <div style="font-size:11px;color:var(--textSec)">来自「产品 Landing Page」· 3 分钟前</div>
+            </div>
+            <div style="background:var(--surfaceMuted);border-radius:12px;padding:16px;cursor:pointer;border:1px solid transparent;transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'">
+              <div style="height:80px;background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px">sales-report.xlsx</div>
+              <div style="font-size:11px;color:var(--textSec)">来自「销售数据分析」· 1 小时前</div>
+            </div>
+            <div style="background:var(--surfaceMuted);border-radius:12px;padding:16px;cursor:pointer;border:1px solid transparent;transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'">
+              <div style="height:80px;background:linear-gradient(135deg,#fce4ec,#f8bbd0);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px">chart-visualization.svg</div>
+              <div style="font-size:11px;color:var(--textSec)">来自「销售数据分析」· 1 小时前</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="anno-card">
+    <h3>重构要点</h3>
+    <ul>
+      <li><strong>精简为 5 个入口</strong>：新建任务、定时任务、文件<span class="badge-new">NEW</span>、设备、收起</li>
+      <li><strong>搜索</strong>迁入顶部快捷键（⌘K），不再占一级入口</li>
+      <li><strong>技能、MCP、我的设备</strong><span class="badge-moved">→ 设置</span>统一收纳进设置页对应分组</li>
+      <li><strong>用户头像行</strong>底部新增，点击进入账号/设置（与手机端"我的"对齐）</li>
+      <li><strong>会话列表</strong>新增类型图标 + 右键菜单 + 拖拽排序</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== COLLAPSED ===== -->
+<div class="canvas-inner" id="tab-collapsed">
+  <span class="scene-label">19.01 · 收起状态（仅显示图标）</span>
+  <div class="app-frame">
+    <div class="title-bar">
+      <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+      <div class="title">MiClaw</div>
+    </div>
+    <div class="app-body">
+      <div class="sidebar collapsed" style="width:56px">
+        <div class="sidebar-top">
+          <div class="drag-region"></div>
+          <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+            <button class="nav-btn primary" style="justify-content:center;padding:8px 0" title="新建任务">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg></span>
+            </button>
+            <button class="nav-btn" style="justify-content:center;padding:8px 0" title="定时任务">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+            </button>
+            <button class="nav-btn" style="justify-content:center;padding:8px 0" title="文件">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
+            </button>
+            <button class="nav-btn" style="justify-content:center;padding:8px 0" title="设备">
+              <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></span>
+            </button>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="sidebar-bottom" style="padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div class="user-avatar" style="cursor:pointer" title="小米用户"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <button class="collapse-btn" style="justify-content:center;padding:6px 0" title="展开侧边栏">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 17l5-5-5-5"/><path d="M6 17l5-5-5-5"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="main-header">
+          <span style="font-size:14px;font-weight:600">帮我设计产品 Landing Page</span>
+          <div style="flex:1"></div>
+          <div class="model-badge">Claude Sonnet 4</div>
+        </div>
+        <div class="main-body">
+          <span style="opacity:.5">对话内容区域 — 侧边栏收起后获得更大工作区</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div class="canvas-inner" id="tab-settings">
+  <span class="scene-label">19.03 · 设置页（迁入的功能入口）</span>
+  <div style="width:640px;background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);overflow:hidden">
+    <div style="padding:24px 24px 8px">
+      <div style="font-size:18px;font-weight:700;margin-bottom:4px">设置</div>
+      <div style="font-size:12.5px;color:var(--textSec)">管理账号、模型、扩展功能等</div>
+    </div>
+    <!-- Section: Account -->
+    <div style="padding:16px 24px 8px">
+      <div style="font-size:12px;font-weight:700;color:var(--textSec);text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;border-bottom:1px solid var(--borderLight)">账号</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--borderLight)">
+        <div class="user-avatar" style="width:40px;height:40px;border-radius:10px"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div><div style="font-size:14px;font-weight:600">小米用户</div><div style="font-size:12px;color:var(--textSec)">xiaomi@example.com</div></div>
+        <div style="flex:1"></div>
+        <span style="font-size:12px;color:var(--accent);cursor:pointer">编辑 →</span>
+      </div>
+    </div>
+    <!-- Section: Model -->
+    <div style="padding:16px 24px 8px">
+      <div style="font-size:12px;font-weight:700;color:var(--textSec);text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;border-bottom:1px solid var(--borderLight)">模型与供应商</div>
+      <div style="padding:10px 0;font-size:13px;color:var(--text)">默认模型、API 配置…</div>
+    </div>
+    <!-- Section: Skills (MOVED) -->
+    <div style="padding:16px 24px 8px">
+      <div style="font-size:12px;font-weight:700;color:var(--textSec);text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;border-bottom:1px solid var(--borderLight)">
+        技能管理<span class="badge-moved">从侧边栏迁入</span>
+      </div>
+      <div style="padding:10px 0;display:flex;flex-wrap:wrap;gap:8px">
+        <span style="padding:6px 12px;border-radius:8px;background:var(--surfaceMuted);border:1px solid var(--borderLight);font-size:12px;color:var(--text)">📊 数据分析</span>
+        <span style="padding:6px 12px;border-radius:8px;background:var(--surfaceMuted);border:1px solid var(--borderLight);font-size:12px;color:var(--text)">🖼 图片生成</span>
+        <span style="padding:6px 12px;border-radius:8px;background:var(--surfaceMuted);border:1px solid var(--borderLight);font-size:12px;color:var(--text)">📝 文档写作</span>
+        <span style="padding:6px 12px;border-radius:8px;background:var(--accentMuted);border:1px dashed var(--accent);font-size:12px;color:var(--accent);cursor:pointer">+ 添加技能</span>
+      </div>
+    </div>
+    <!-- Section: MCP (MOVED) -->
+    <div style="padding:16px 24px 8px">
+      <div style="font-size:12px;font-weight:700;color:var(--textSec);text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;border-bottom:1px solid var(--borderLight)">
+        MCP 服务<span class="badge-moved">从侧边栏迁入</span>
+      </div>
+      <div style="padding:10px 0;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--surfaceMuted)">
+          <span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>
+          <span style="font-size:13px;flex:1">filesystem-server</span>
+          <span style="font-size:11px;color:var(--textSec)">运行中</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--surfaceMuted)">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--surfaceInset)"></span>
+          <span style="font-size:13px;flex:1">web-search-server</span>
+          <span style="font-size:11px;color:var(--textSec)">已停止</span>
+        </div>
+      </div>
+    </div>
+    <!-- Section: Quick Invoke -->
+    <div style="padding:16px 24px 8px">
+      <div style="font-size:12px;font-weight:700;color:var(--textSec);text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;border-bottom:1px solid var(--borderLight)">快捷呼出</div>
+      <div style="padding:10px 0;font-size:13px;color:var(--text)">状态栏面板、悬浮球、全局快捷键…</div>
+    </div>
+    <!-- Section: Widgets -->
+    <div style="padding:16px 24px 20px">
+      <div style="font-size:12px;font-weight:700;color:var(--textSec);text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;border-bottom:1px solid var(--borderLight)">
+        小部件<span class="badge-new">NEW</span>
+      </div>
+      <div style="padding:10px 0;font-size:13px;color:var(--text)">管理已发布的 macOS 桌面小部件…</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.canvas-inner').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
