@@ -109,6 +109,44 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
 .config-item .ci-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--borderLight);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textSec);transition:.12s}
 .config-item .ci-btn:hover{border-color:var(--accent);color:var(--accent)}
 
+/* Conversation to desktop flow */
+.flow-shell{width:1100px;display:grid;grid-template-columns:1.25fr 340px 260px;gap:18px;align-items:start}
+.flow-card{background:var(--surface);border-radius:18px;box-shadow:var(--shadow-card);border:1px solid var(--borderLight);overflow:hidden}
+.conv-header{padding:16px 20px;border-bottom:1px solid var(--borderLight);display:flex;align-items:center;gap:10px}
+.conv-body{padding:18px;display:flex;flex-direction:column;gap:12px;background:linear-gradient(180deg,#fff,#fbfcfe)}
+.msg{max-width:82%;padding:12px 14px;border-radius:14px;font-size:13px;line-height:1.6}
+.msg.user{align-self:flex-end;background:var(--accentMuted);color:var(--text);border-bottom-right-radius:6px}
+.msg.agent{align-self:flex-start;background:var(--surfaceMuted);color:var(--text);border-bottom-left-radius:6px}
+.artifact-result{align-self:flex-start;width:100%;background:var(--surface);border:1px solid var(--borderLight);border-radius:16px;overflow:hidden}
+.artifact-top{padding:12px 14px;border-bottom:1px solid var(--borderLight);display:flex;align-items:center;gap:8px}
+.artifact-actions{margin-left:auto;display:flex;gap:8px}
+.artifact-btn{height:32px;padding:0 12px;border-radius:10px;border:1px solid var(--borderLight);background:var(--surface);font-size:12px;color:var(--textSec);cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:500}
+.artifact-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.artifact-preview{padding:14px;background:linear-gradient(135deg,#172033,#0f172a);display:flex;justify-content:center}
+.flow-drawer{background:var(--surface);border-radius:18px;box-shadow:var(--shadow-card);border:1px solid var(--borderLight);overflow:hidden}
+.drawer-header{padding:16px;border-bottom:1px solid var(--borderLight)}
+.drawer-title{font-size:15px;font-weight:700}
+.drawer-desc{font-size:12px;color:var(--textSec);margin-top:4px;line-height:1.5}
+.drawer-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-size:11px;font-weight:700;color:var(--textSec);text-transform:uppercase;letter-spacing:.4px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg-item{padding:7px 10px;border-radius:10px;background:var(--surfaceMuted);border:1px solid var(--borderLight);font-size:12px;color:var(--textSec);cursor:pointer}
+.seg-item.active{background:var(--accentMuted);border-color:rgba(13,148,136,.25);color:var(--accent);font-weight:600}
+.input{height:38px;border-radius:10px;border:1px solid var(--borderLight);background:var(--surfaceMuted);padding:0 12px;font-size:12.5px;color:var(--text);outline:none}
+.select{height:38px;border-radius:10px;border:1px solid var(--borderLight);background:var(--surfaceMuted);padding:0 12px;font-size:12.5px;color:var(--text)}
+.mini-preview{padding:12px;border-radius:14px;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,255,255,.04)}
+.mini-preview .widget{transform:none!important}
+.drawer-footer{padding:14px 16px;border-top:1px solid var(--borderLight);display:flex;gap:8px}
+.drawer-footer .action{flex:1;height:38px;border-radius:12px;border:1px solid var(--borderLight);background:var(--surface);font-size:12.5px;cursor:pointer;font-weight:600}
+.drawer-footer .action.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.flow-steps{display:flex;flex-direction:column;gap:10px}
+.step{padding:14px 14px 14px 40px;border-radius:16px;background:var(--surface);border:1px solid var(--borderLight);position:relative}
+.step::before{content:attr(data-step);position:absolute;left:14px;top:14px;width:18px;height:18px;border-radius:50%;background:var(--accentMuted);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step .st-title{font-size:13px;font-weight:700;margin-bottom:4px}
+.step .st-desc{font-size:12px;color:var(--textSec);line-height:1.6}
+.success-toast{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.18);font-size:12px;color:#15803d;display:flex;align-items:center;gap:8px}
+
 .anno-card{max-width:800px;width:100%;padding:20px 24px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow-card);border:1px solid var(--borderLight)}
 .anno-card h3{font-size:14px;font-weight:700;margin-bottom:10px}
 .anno-card ul{padding-left:18px}
@@ -120,7 +158,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
 
 <div class="tab-bar">
   <span class="logo">MiClaw · macOS 小部件 UI 稿</span>
-  <div class="tab active" onclick="showTab('oneclick')">21.02 一键执行</div>
+  <div class="tab active" onclick="showTab('flow')">21.07 添加流程</div>
+  <div class="tab" onclick="showTab('oneclick')">21.02 一键执行</div>
   <div class="tab" onclick="showTab('auto')">21.03 自动化</div>
   <div class="tab" onclick="showTab('text')">21.04 纯文本</div>
   <div class="tab" onclick="showTab('rich')">21.05 图文</div>
@@ -130,8 +169,165 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
 
 <div class="canvas">
 
+<!-- ===== FLOW ===== -->
+<div class="canvas-inner active" id="tab-flow">
+  <span class="scene-label">21.07 · 从任务对话框添加到桌面</span>
+  <div class="flow-shell">
+    <div class="flow-card">
+      <div class="conv-header">
+        <div style="width:28px;height:28px;border-radius:8px;background:var(--accentMuted);display:flex;align-items:center;justify-content:center;color:var(--accent)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:700">Agent 对话</div>
+          <div style="font-size:12px;color:var(--textSec)">任务完成后可直接发布为桌面小部件</div>
+        </div>
+      </div>
+      <div class="conv-body">
+        <div class="msg user">帮我做一个每天早上 8 点推送设计灵感的 Agent。</div>
+        <div class="msg agent">已为你生成一个「每日审美灵感」任务：每天 8:00 抓取 Behance / Dribbble 的精选内容，并输出图片 + 文案摘要。</div>
+        <div class="artifact-result">
+          <div class="artifact-top">
+            <div style="width:26px;height:26px;border-radius:8px;background:rgba(13,148,136,.1);display:flex;align-items:center;justify-content:center;color:var(--accent)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600">每日审美灵感任务</div>
+              <div style="font-size:11px;color:var(--textSec)">已具备固定触发时间、结构化输出与标题建议</div>
+            </div>
+            <div class="artifact-actions">
+              <button class="artifact-btn">编辑任务</button>
+              <button class="artifact-btn primary">添加到桌面</button>
+            </div>
+          </div>
+          <div class="artifact-preview">
+            <div class="widget w-4x2" style="width:420px;height:190px">
+              <div class="w-header">
+                <div class="w-app-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5z"/></svg></div>
+                <span class="w-app-name">MiClaw</span>
+                <span class="w-time">每天 08:00</span>
+              </div>
+              <div style="display:flex;gap:12px;flex:1">
+                <div style="flex:1">
+                  <div class="w-title">每日审美灵感</div>
+                  <div class="w-img-text" style="margin-top:4px;color:rgba(255,255,255,.6)">每天自动投喂精选 UI / 插画 / 交互动效参考，并输出 AI 风格解析。</div>
+                </div>
+                <div style="width:92px;height:92px;border-radius:12px;background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.03));flex-shrink:0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title">添加到桌面</div>
+        <div class="drawer-desc">系统已识别该任务适合发布为小部件，并自动预填模板、标题与图标。</div>
+      </div>
+      <div class="drawer-body">
+        <div class="field">
+          <label>推荐模板</label>
+          <div class="seg">
+            <div class="seg-item">一键执行</div>
+            <div class="seg-item">自动化</div>
+            <div class="seg-item">纯文本</div>
+            <div class="seg-item active">图文</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>标题</label>
+          <input class="input" value="每日审美灵感">
+        </div>
+        <div class="field">
+          <label>副标题</label>
+          <input class="input" value="每日 08:00 推送设计灵感与 AI 解析">
+        </div>
+        <div class="field">
+          <label>尺寸</label>
+          <div class="seg">
+            <div class="seg-item">2×1</div>
+            <div class="seg-item">4×2</div>
+            <div class="seg-item active">4×4</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>刷新频率</label>
+          <select class="select">
+            <option>每天 08:00</option>
+            <option>每 6 小时</option>
+            <option>手动刷新</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>设备范围</label>
+          <select class="select">
+            <option>仅当前 Mac</option>
+            <option>同步到我的所有 Apple 设备</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>桌面预览</label>
+          <div class="mini-preview">
+            <div class="widget w-4x2" style="width:100%;height:156px">
+              <div class="w-header">
+                <div class="w-app-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5z"/></svg></div>
+                <span class="w-app-name">MiClaw</span>
+                <span class="w-time">08:00</span>
+              </div>
+              <div style="display:flex;gap:10px;flex:1">
+                <div style="flex:1">
+                  <div class="w-title" style="font-size:13px">每日审美灵感</div>
+                  <div class="w-img-text" style="font-size:11px">自动展示灵感图与 AI 风格解读</div>
+                </div>
+                <div style="width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.03));flex-shrink:0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <button class="action">继续编辑任务</button>
+        <button class="action primary">发布到桌面</button>
+      </div>
+    </div>
+
+    <div class="flow-steps">
+      <div class="step" data-step="1">
+        <div class="st-title">任务完成后出现入口</div>
+        <div class="st-desc">当任务具备固定结构、触发条件与输出形式时，在结果卡片右上角显示 <code>添加到桌面</code>。</div>
+      </div>
+      <div class="step" data-step="2">
+        <div class="st-title">自动推荐模板</div>
+        <div class="st-desc">系统根据任务类型推荐图文 / 自动化 / 纯文本 / 一键执行模板，并预填标题、副标题与图标。</div>
+      </div>
+      <div class="step" data-step="3">
+        <div class="st-title">用户确认发布参数</div>
+        <div class="st-desc">可调整尺寸、刷新频率、设备范围；若任务缺少触发时间等必要字段，则按钮置灰并提示缺失项。</div>
+      </div>
+      <div class="step" data-step="4">
+        <div class="st-title">发布成功反馈</div>
+        <div class="st-desc">写入本地小部件配置并触发 macOS WidgetKit 同步，成功后给出「在桌面查看 / 继续编辑」反馈。</div>
+        <div class="success-toast">
+          <span style="font-size:14px">✓</span>
+          <span>已发布到桌面：`每日审美灵感`</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="anno-card">
+    <h3>21.07 · 从任务对话框添加到桌面</h3>
+    <ul>
+      <li>入口不放在设置页深层，而是直接出现在 <strong>任务结果卡片 / 对话流</strong> 中，降低发现成本。</li>
+      <li>发布前只让用户确认必要参数，避免重复创建一遍任务配置。</li>
+      <li>推荐模板由系统自动判断，但必须允许手动切换，保证可控性。</li>
+      <li>若任务不满足发布条件，需要明确提示缺失项，而不是直接不显示入口。</li>
+    </ul>
+  </div>
+</div>
+
 <!-- ===== ONE-CLICK ===== -->
-<div class="canvas-inner active" id="tab-oneclick">
+<div class="canvas-inner" id="tab-oneclick">
   <span class="scene-label">21.02 · 一键执行类模板（2×1 小尺寸）</span>
   <div class="desktop-bg" style="min-height:360px;display:flex;flex-wrap:wrap;gap:16px;align-content:flex-start;padding-top:56px">
     <div class="menu-sim"><span>MiClaw</span><span class="time">16:30 ☀</span></div>

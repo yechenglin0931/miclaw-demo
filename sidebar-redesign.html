@@ -43,7 +43,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
 /* Sidebar */
 .sidebar{width:240px;background:var(--surfaceMuted);border-right:1px solid var(--borderLight);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s}
 .sidebar.collapsed{width:56px}
-.sidebar.collapsed .nav-text,.sidebar.collapsed .sess-text,.sidebar.collapsed .user-name,.sidebar.collapsed .sess-group-label,.sidebar.collapsed .search-btn{display:none}
+.sidebar.collapsed .nav-text,.sidebar.collapsed .user-name,.sidebar.collapsed .search-btn{display:none}
 .sidebar.collapsed .nav-btn{justify-content:center;padding:8px 0}
 .sidebar.collapsed .nav-btn .nav-icon{margin:0}
 .sidebar.collapsed .user-row{justify-content:center;padding:8px 0}
@@ -68,7 +68,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
 .sess-item .sess-dot.idle{background:var(--surfaceInset)}
 .sess-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sess-item .sess-time{font-size:10px;color:var(--textSec);flex-shrink:0}
-.sess-item .sess-type{width:16px;height:16px;flex-shrink:0;color:var(--textSec)}
+
+.sidebar-fill{flex:1}
 
 .sidebar-bottom{border-top:1px solid var(--borderLight);padding:8px 12px;flex-shrink:0}
 .user-row{display:flex;align-items:center;gap:10px;padding:6px 4px;cursor:pointer;border-radius:8px;transition:.12s}
@@ -228,36 +229,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
             </button>
           </div>
         </div>
-        <div class="sidebar-sessions">
-          <div class="sess-group-label">今天</div>
-          <div class="sess-item">
-            <div class="sess-dot"></div>
-            <span class="sess-text">帮我设计产品 Landing Page</span>
-            <span class="sess-time">3分钟前</span>
-          </div>
-          <div class="sess-item">
-            <div class="sess-dot idle"></div>
-            <span class="sess-text">分析这份销售数据并生成图表</span>
-            <span class="sess-time">1小时前</span>
-          </div>
-          <div class="sess-group-label">昨天</div>
-          <div class="sess-item">
-            <div class="sess-dot idle"></div>
-            <span class="sess-text">翻译日文论文摘要</span>
-            <span class="sess-time">昨天</span>
-          </div>
-          <div class="sess-item">
-            <div class="sess-dot idle"></div>
-            <span class="sess-text">帮我写一个 React 组件</span>
-            <span class="sess-time">昨天</span>
-          </div>
-          <div class="sess-group-label">本周</div>
-          <div class="sess-item">
-            <div class="sess-dot idle"></div>
-            <span class="sess-text">项目周报自动生成</span>
-            <span class="sess-time">周三</span>
-          </div>
-        </div>
+        <div class="sidebar-fill"></div>
         <div class="sidebar-bottom">
           <div class="user-row">
             <div class="user-avatar"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
@@ -319,7 +291,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#E5E7EB
       <li><strong>搜索</strong>迁入顶部快捷键（⌘K），不再占一级入口</li>
       <li><strong>技能、MCP、我的设备</strong><span class="badge-moved">→ 设置</span>统一收纳进设置页对应分组</li>
       <li><strong>用户头像行</strong>底部新增，点击进入账号/设置（与手机端"我的"对齐）</li>
-      <li><strong>会话列表</strong>新增类型图标 + 右键菜单 + 拖拽排序</li>
+      <li><strong>取消侧边欄會話列表區</strong>，會話入口統一回到主內容頁或搜索浮層中處理</li>
     </ul>
   </div>
 </div>
